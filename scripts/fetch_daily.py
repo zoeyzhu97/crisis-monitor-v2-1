@@ -156,6 +156,26 @@ def fred_series(series_id, n=400):
     return rows[-n:]
 
 
+def cached_oas():
+    """官方 FRED/ALFRED 在当前网络不可达时，读取上次成功的官方值。
+
+    保留原 as_of，后续仍由统一新鲜度规则判断是否剔除，不会把缓存冒充成当日数据。
+    """
+    latest_path = OUT_DIR / "latest.json"
+    series_path = OUT_DIR / "series.json"
+    try:
+        latest = json.loads(latest_path.read_text())
+        value = float(latest["values"]["credit_spread"])
+        meta = latest["meta"]["credit_spread"]
+        if not in_range("credit_spread", value) or "FRED BAMLH0A0HYM2" not in meta.get("source", ""):
+            return None, []
+        raw_series = json.loads(series_path.read_text()).get("credit_spread", [])
+        series = [(row["d"], float(row["v"])) for row in raw_series]
+        return {"value": value, "source": "FRED BAMLH0A0HYM2", "as_of": meta["as_of"]}, series
+    except Exception:
+        return None, []
+
+
 # ─────────────────────────────────────────────────────────────
 # Yahoo Finance
 # ─────────────────────────────────────────────────────────────
@@ -317,13 +337,6 @@ def fetch_all():
         put("credit_spread", oas_series[-1][1], "FRED BAMLH0A0HYM2", oas_series[-1][0])
     except Exception as e:
         log(f"  FRED OAS 失败: {e}")
-    fred_backup = {}
-    for key, sid in [("vix", "VIXCLS"), ("us_10y", "DGS10"), ("brent", "DCOILBRENTEU")]:
-        try:
-            rows = fred_series(sid, 5)
-            fred_backup[key] = (rows[-1][0], rows[-1][1], f"FRED {sid}")
-        except Exception as e:
-            log(f"  FRED {sid} 失败: {e}")
 
     # ── Yahoo ──
     log("Yahoo Finance …")
@@ -338,10 +351,15 @@ def fetch_all():
             yseries[key] = s
             put(key, float(s.iloc[-1]), f"Yahoo {tk}", s.index[-1])
 
-    # Yahoo 缺失时用 FRED 备份
-    for key, (d, v, src) in fred_backup.items():
-        if key not in fields:
-            put(key, v, src, d)
+    # Yahoo 缺失时才请求 FRED 备份，避免每日无意义地等待备用端点。
+    for key, sid in [("vix", "VIXCLS"), ("us_10y", "DGS10"), ("brent", "DCOILBRENTEU")]:
+        if key in fields:
+            continue
+        try:
+            rows = fred_series(sid, 5)
+            put(key, rows[-1][1], f"FRED {sid}", rows[-1][0])
+        except Exception as e:
+            log(f"  FRED {sid} 备份失败: {e}")
 
     # ── Bank of England ──
     log("Bank of England …")
@@ -364,6 +382,14 @@ def fetch_all():
         for k, rec in claude_fallback(missing).items():
             fields[k] = rec
             log(f"  ✓ {k} = {rec['value']} (claude)")
+
+    # GitHub hosted runner 可能无法连通 St. Louis Fed；只对核心 OAS 使用上次官方抓取缓存。
+    if "credit_spread" not in fields:
+        cached, cached_series = cached_oas()
+        if cached:
+            fields["credit_spread"] = cached
+            oas_series = oas_series or cached_series
+            log(f"  ✓ credit_spread {cached['value']:>10.4f}  (FRED 上次成功抓取, {cached['as_of']})")
 
     derived = compute_derived(fields, oas_series, yseries.get("hyg"), yseries.get("iei"), yseries.get("nasdaq"))
     return fields, derived, oas_series

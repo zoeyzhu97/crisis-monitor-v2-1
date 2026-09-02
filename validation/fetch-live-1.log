@@ -1,0 +1,21 @@
+[06:13:04] FRED …
+[06:13:35]   FRED OAS 失败: HTTPSConnectionPool(host='fred.stlouisfed.org', port=443): Read timed out. (read timeout=30)
+[06:14:06]   FRED VIXCLS 失败: HTTPSConnectionPool(host='fred.stlouisfed.org', port=443): Read timed out. (read timeout=30)
+[06:14:37]   FRED DGS10 失败: HTTPSConnectionPool(host='fred.stlouisfed.org', port=443): Read timed out. (read timeout=30)
+[06:15:08]   FRED DCOILBRENTEU 失败: HTTPSConnectionPool(host='fred.stlouisfed.org', port=443): Read timed out. (read timeout=30)
+[06:15:08] Yahoo Finance …
+Cookie fetch from fc.yahoo.com failed (ConnectionError), continuing without it
+[06:16:13]   yahoo ^VIX 失败: Too Many Requests. Rate limited. Try after a while.
+[06:16:15]   yahoo ^TNX 失败: Too Many Requests. Rate limited. Try after a while.
+[06:16:18]   yahoo GBPCNY=X 失败: Too Many Requests. Rate limited. Try after a while.
+[06:16:19]   yahoo BZ=F 失败: Too Many Requests. Rate limited. Try after a while.
+[06:16:21]   yahoo GC=F 失败: Too Many Requests. Rate limited. Try after a while.
+[06:16:24]   yahoo DX-Y.NYB 失败: Too Many Requests. Rate limited. Try after a while.
+[06:16:27]   yahoo ^IXIC 失败: Too Many Requests. Rate limited. Try after a while.
+[06:16:28]   yahoo HYG 失败: Too Many Requests. Rate limited. Try after a while.
+[06:16:29]   yahoo IEI 失败: Too Many Requests. Rate limited. Try after a while.
+[06:16:29] Bank of England …
+[06:16:30]   ✓ uk_10y             5.0254  (BoE IUDMNPY, 2026-08-27)
+[06:16:30] 缺失字段 ['credit_spread', 'vix', 'us_10y', 'brent', 'gbp_cny', 'gold', 'dxy', 'nasdaq']，尝试 Claude 兜底 …
+[06:16:30]   ⚠ uk_10y 数据日期 2026-08-27，已 4 个交易日未更新，剔除出评分
+[06:16:30] 完成。写入 /Users/zhuyidan/Documents/ChatGPT/金融危机预测/crisis-monitor-v2.1/public/data。缺失字段: ['credit_spread', 'vix', 'us_10y', 'brent', 'gbp_cny', 'gold', 'dxy', 'nasdaq']

@@ -1,0 +1,68 @@
+# 每个工作日自动抓取数据 → 提交到仓库 → 构建 → 部署到 GitHub Pages
+# 手动触发：GitHub 仓库页面 → Actions → daily-update → Run workflow
+name: daily-update
+
+on:
+  schedule:
+    # UTC 12:30 = 伦敦 13:30（夏令时）。FRED 的 HY OAS 在美东上午更新，此时已可拿到前一交易日数据。
+    - cron: "30 12 * * 1-5"
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: daily-update
+  cancel-in-progress: false
+
+jobs:
+  update-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install python deps
+        run: pip install -r requirements.txt
+
+      - name: Fetch market data
+        env:
+          # 可选：在 Settings → Secrets 里添加 ANTHROPIC_API_KEY，抓取失败的字段会自动用 Claude 补齐
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python scripts/fetch_daily.py
+
+      - name: Commit data
+        run: |
+          git config user.name "crisis-monitor-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add public/data
+          git diff --cached --quiet || git commit -m "data: $(date -u +%Y-%m-%d)"
+          git push
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Build site
+        run: |
+          npm ci
+          npm run build
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,51 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #F9F7F3;
+  --surface: #FFFFFF;
+  --surface-alt: #F2EFE9;
+  --border: #E5E0D8;
+  --border-light: #EDE9E1;
+  --text-primary: #1A1612;
+  --text-secondary: #6B635A;
+  --text-tertiary: #9C948A;
+  --accent: #C9651A;
+  --green: #2E7D32;
+  --green-bg: #E8F5E9;
+  --yellow: #F9A825;
+  --yellow-bg: #FFF8E1;
+  --orange: #E65100;
+  --orange-bg: #FFF3E0;
+  --red: #C62828;
+  --red-bg: #FFEBEE;
+  --blue: #1565C0;
+  --blue-bg: #E3F2FD;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+  --font: 'Inter', -apple-system, 'Noto Sans SC', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.6;
+}
+
+button {
+  font-family: inherit;
+}
+
+::selection {
+  background: #C9651A30;
+}

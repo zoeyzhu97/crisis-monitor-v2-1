@@ -1,0 +1,18 @@
+[07:28:14] FRED …
+[07:28:38]   FRED OAS 失败: fred.stlouisfed.org: The read operation timed out; alfred.stlouisfed.org: The read operation timed out
+[07:29:09]   FRED public dashboard OAS 备份失败: The read operation timed out
+[07:29:09] Yahoo Finance …
+[07:29:09]   ✓ vix               16.3400  (Yahoo ^VIX, 2026-09-01)
+[07:29:10]   ✓ us_10y             4.7960  (Yahoo ^TNX, 2026-09-01)
+[07:29:10]   ✓ gbp_cny            9.0486  (Yahoo GBPCNY=X, 2026-09-02)
+[07:29:10]   ✓ brent             95.0100  (Yahoo BZ=F, 2026-09-02)
+[07:29:10]   ✓ gold            4374.2998  (Yahoo GC=F, 2026-09-02)
+[07:29:10]   ✓ dxy               99.7660  (Yahoo DX-Y.NYB, 2026-09-02)
+[07:29:10]   ✓ nasdaq         26099.7695  (Yahoo ^IXIC, 2026-09-01)
+[07:29:10]   ✓ hyg               79.1000  (Yahoo HYG, 2026-09-01)
+[07:29:10]   ✓ iei              115.5300  (Yahoo IEI, 2026-09-01)
+[07:29:10] Bank of England …
+[07:29:11]   ✓ uk_10y             5.0254  (BoE IUDMNPY, 2026-08-27)
+[07:29:11] 缺失字段 ['credit_spread']，尝试 Claude 兜底 …
+[07:29:11]   ✓ credit_spread   263.0000  (FRED 上次成功抓取, 2026-08-31)
+[07:29:11] 完成。写入 public/data。缺失字段: 无

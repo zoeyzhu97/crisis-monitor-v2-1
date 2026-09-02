@@ -64,10 +64,18 @@ function computeAll(values, derived, meta) {
   if (!values) return { scores: INDICATORS.map(() => null), overall: null, avg: null, floored: false, excluded: [] };
   const excluded = [];
   const sc = INDICATORS.map(i => {
+    if (i.key === "credit_spread") {
+      const oasStale = isStale(meta, "credit_spread");
+      const proxyStale = isStale(meta, "hyg") || isStale(meta, "iei");
+      if (oasStale) excluded.push(i.key);
+      return spreadScore(
+        oasStale ? null : values.credit_spread,
+        oasStale ? null : derived?.credit_spread_20d_change,
+        proxyStale ? null : derived?.hy_proxy_20d_pct,
+      );
+    }
     if (isStale(meta, i.key)) { excluded.push(i.key); return null; }
-    return i.key === "credit_spread"
-      ? spreadScore(values.credit_spread, derived?.credit_spread_20d_change, derived?.hy_proxy_20d_pct)
-      : scoreOne(values[i.key], i.thresholds, i.inverted);
+    return scoreOne(values[i.key], i.thresholds, i.inverted);
   });
   let tw = 0, ts = 0;
   sc.forEach((s, i) => { if (s != null) { tw += INDICATORS[i].weight; ts += s * INDICATORS[i].weight; } });

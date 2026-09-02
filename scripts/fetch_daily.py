@@ -21,6 +21,7 @@
 import io
 import json
 import os
+import re
 import sys
 import urllib.request
 from datetime import date, datetime, timedelta, timezone
@@ -154,6 +155,27 @@ def fred_series(series_id, n=400):
             continue
         rows.append((d, float(v)))
     return rows[-n:]
+
+
+def fred_public_dashboard_oas(n=100):
+    """FRED 官方公开 dashboard 的 OAS 表格，用于 graph 端点不可达时。"""
+    url = "https://fredaccount.stlouisfed.org/public/dashboard/30917"
+    req = urllib.request.Request(url, headers=UA)
+    with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+        html = r.read().decode("utf-8")
+    marker = 'data-series-id="BAMLH0A0HYM2"'
+    start = html.find(marker)
+    end = html.find("</table>", start)
+    if start < 0 or end < 0:
+        raise RuntimeError("FRED public dashboard 未找到 BAMLH0A0HYM2 表格")
+    rows = re.findall(
+        r'<td class="name">\s*([^<]+?)\s*</td>\s*<td class="value">\s*([^<]+?)\s*</td>',
+        html[start:end],
+    )
+    parsed = [(d.strip(), float(v.strip())) for d, v in rows]
+    if not parsed:
+        raise RuntimeError("FRED public dashboard OAS 表格无数据")
+    return list(reversed(parsed))[-n:]
 
 
 def cached_oas():
@@ -337,6 +359,11 @@ def fetch_all():
         put("credit_spread", oas_series[-1][1], "FRED BAMLH0A0HYM2", oas_series[-1][0])
     except Exception as e:
         log(f"  FRED OAS 失败: {e}")
+        try:
+            oas_series = [(d, v * 100) for d, v in fred_public_dashboard_oas(100)]
+            put("credit_spread", oas_series[-1][1], "FRED BAMLH0A0HYM2 (public dashboard)", oas_series[-1][0])
+        except Exception as e2:
+            log(f"  FRED public dashboard OAS 备份失败: {e2}")
 
     # ── Yahoo ──
     log("Yahoo Finance …")

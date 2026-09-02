@@ -3,10 +3,10 @@
   "date": "2026-09-02",
   "vix": 16.34,
   "us_10y": 4.796,
-  "gbp_cny": 9.0728,
-  "brent": 95.28,
-  "gold": 4368.0,
-  "dxy": 99.791,
+  "gbp_cny": 9.0452,
+  "brent": 94.91,
+  "gold": 4377.2998,
+  "dxy": 99.768,
   "nasdaq": 26099.7695,
   "hyg": 79.1,
   "iei": 115.53,
@@ -14,10 +14,10 @@
   "credit_spread": 263.0,
   "credit_spread_20d_change": -15.0,
   "credit_spread_20d_min": 260.0,
-  "hy_proxy_20d_pct": 0.33,
+  "hy_proxy_20d_pct": 0.32,
   "hy_proxy_ratio": 0.6847,
   "nasdaq_drawdown_pct": -3.67,
-  "nasdaq_20d_pct": 0.72,
+  "nasdaq_20d_pct": -1.83,
   "nasdaq_52w_high": 27093.9
  }
 ]

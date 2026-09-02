@@ -1,0 +1,56 @@
+{
+  "fetched_at": "2026-09-02T07:06:12.674220+00:00",
+  "date": "2026-09-02",
+  "values": {
+    "credit_spread": 263.0,
+    "vix": 14.92,
+    "us_10y": 4.75,
+    "brent": 88.24,
+    "uk_10y": 5.0254
+  },
+  "meta": {
+    "credit_spread": {
+      "source": "FRED BAMLH0A0HYM2",
+      "as_of": "2026-08-31",
+      "stale_bdays": 2,
+      "stale": false
+    },
+    "vix": {
+      "source": "FRED VIXCLS",
+      "as_of": "2026-08-31",
+      "stale_bdays": 2,
+      "stale": false
+    },
+    "us_10y": {
+      "source": "FRED DGS10",
+      "as_of": "2026-08-31",
+      "stale_bdays": 2,
+      "stale": false
+    },
+    "brent": {
+      "source": "FRED DCOILBRENTEU",
+      "as_of": "2026-08-25",
+      "stale_bdays": 6,
+      "stale": true
+    },
+    "uk_10y": {
+      "source": "BoE IUDMNPY",
+      "as_of": "2026-08-27",
+      "stale_bdays": 3,
+      "stale": false
+    }
+  },
+  "derived": {
+    "credit_spread_20d_change": -15.0,
+    "credit_spread_20d_min": 260.0
+  },
+  "freshness": {
+    "max_stale_bdays_allowed": 3,
+    "excluded_from_score": [
+      "brent"
+    ],
+    "oldest_key": "brent",
+    "oldest_bdays": 6,
+    "oldest_as_of": "2026-08-25"
+  }
+}

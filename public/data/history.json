@@ -1,0 +1,12 @@
+[
+ {
+  "date": "2026-09-02",
+  "credit_spread": 263.0,
+  "vix": 14.92,
+  "us_10y": 4.75,
+  "brent": 88.24,
+  "uk_10y": 5.0254,
+  "credit_spread_20d_change": -15.0,
+  "credit_spread_20d_min": 260.0
+ }
+]

@@ -23,7 +23,7 @@ import json
 import os
 import sys
 import urllib.request
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import requests
@@ -33,6 +33,7 @@ OUT_DIR = ROOT / "public" / "data"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 TIMEOUT = 30
+FRED_TIMEOUT = 12
 UA = {"User-Agent": "crisis-monitor/2.0 (personal research dashboard)"}
 
 # 合理区间：超出即视为抓取错误，丢弃该值（防止把脏数据写进历史）
@@ -51,7 +52,51 @@ VALID_RANGE = {
 }
 
 
-def business_days_between(as_of, today):
+def uk_bank_holidays(year):
+    """英格兰和威尔士银行假日，用于 BoE 日度序列的交易日计数。"""
+    def first_monday(month):
+        d = date(year, month, 1)
+        return d + timedelta(days=(7 - d.weekday()) % 7)
+
+    def last_monday(month):
+        d = date(year, month + 1, 1) - timedelta(days=1) if month < 12 else date(year, 12, 31)
+        return d - timedelta(days=d.weekday())
+
+    # Anonymous Gregorian algorithm
+    a, b, c = year % 19, year // 100, year % 100
+    d, e = b // 4, b % 4
+    f, g = (b + 8) // 25, (b - (b + 8) // 25 + 1) // 3
+    h = (19 * a + b - d - g + 15) % 30
+    i, k = c // 4, c % 4
+    l = (32 + 2 * e + 2 * i - h - k) % 7
+    m = (a + 11 * h + 22 * l) // 451
+    month = (h + l - 7 * m + 114) // 31
+    day = (h + l - 7 * m + 114) % 31 + 1
+    easter = date(year, month, day)
+
+    holidays = {
+        date(year, 1, 1), easter - timedelta(days=2), easter + timedelta(days=1),
+        first_monday(5), last_monday(5), last_monday(8),
+    }
+    # New Year, Christmas and Boxing Day falling on weekends use substitute weekdays.
+    new_year = date(year, 1, 1)
+    if new_year.weekday() == 5:
+        holidays.add(date(year, 1, 3))
+    elif new_year.weekday() == 6:
+        holidays.add(date(year, 1, 2))
+    christmas, boxing = date(year, 12, 25), date(year, 12, 26)
+    if christmas.weekday() < 5:
+        holidays.add(christmas)
+    else:
+        holidays.add(date(year, 12, 27))
+    if boxing.weekday() < 5 and boxing not in holidays:
+        holidays.add(boxing)
+    else:
+        holidays.add(date(year, 12, 28))
+    return holidays
+
+
+def business_days_between(as_of, today, holidays=None):
     """as_of/today 为 YYYY-MM-DD；返回两者之间的工作日数（周一至周五），as_of 当天不计。"""
     try:
         a = datetime.strptime(as_of[:10], "%Y-%m-%d").date()
@@ -60,10 +105,11 @@ def business_days_between(as_of, today):
         return None
     if b <= a:
         return 0
+    holidays = holidays or set()
     n, d = 0, a
     while d < b:
         d = d.fromordinal(d.toordinal() + 1)
-        if d.weekday() < 5:
+        if d.weekday() < 5 and d not in holidays:
             n += 1
     return n
 
@@ -85,12 +131,21 @@ def in_range(key, v):
 # ─────────────────────────────────────────────────────────────
 def fred_series(series_id, n=400):
     """返回 [(date_str, value), ...] 按日期升序，最多 n 条，自动跳过缺失值。"""
-    url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={series_id}"
-    # urllib 在本地与 GitHub Actions 都直接读取公开 CSV；部分网络环境下
-    # requests 会在该端点无响应直至超时，而同一 URL 的系统 TLS 栈可正常访问。
-    req = urllib.request.Request(url, headers=UA)
-    with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
-        text = r.read().decode("utf-8")
+    urls = [
+        f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={series_id}",
+        f"https://alfred.stlouisfed.org/graph/alfredgraph.csv?id={series_id}",
+    ]
+    text, errors = None, []
+    for url in urls:
+        try:
+            req = urllib.request.Request(url, headers=UA)
+            with urllib.request.urlopen(req, timeout=FRED_TIMEOUT) as r:
+                text = r.read().decode("utf-8")
+            break
+        except Exception as e:
+            errors.append(f"{url.split('/')[2]}: {e}")
+    if text is None:
+        raise RuntimeError("; ".join(errors))
     rows = []
     for line in text.strip().splitlines()[1:]:
         d, v = line.split(",", 1)
@@ -337,7 +392,9 @@ def main():
 
     meta = {}
     for k, v in fields.items():
-        bd = business_days_between(v["as_of"], today)
+        holiday_years = range(int(v["as_of"][:4]), int(today[:4]) + 1)
+        holidays = set().union(*(uk_bank_holidays(y) for y in holiday_years)) if k == "uk_10y" else None
+        bd = business_days_between(v["as_of"], today, holidays)
         meta[k] = {"source": v["source"], "as_of": v["as_of"], "stale_bdays": bd,
                    "stale": bd is not None and bd > MAX_STALE_BDAYS}
     core = ["credit_spread", "vix", "us_10y", "uk_10y", "brent", "gbp_cny", "gold", "dxy"]

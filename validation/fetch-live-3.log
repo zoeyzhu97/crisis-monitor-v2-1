@@ -1,0 +1,20 @@
+[07:05:52] FRED …
+[07:05:53]   ✓ credit_spread    263.0000  (FRED BAMLH0A0HYM2, 2026-08-31)
+[07:06:01] Yahoo Finance …
+[07:06:05]   yahoo ^VIX 失败: Too Many Requests. Rate limited. Try after a while.
+[07:06:06]   yahoo ^TNX 失败: Too Many Requests. Rate limited. Try after a while.
+[07:06:06]   yahoo GBPCNY=X 失败: Too Many Requests. Rate limited. Try after a while.
+[07:06:07]   yahoo BZ=F 失败: Too Many Requests. Rate limited. Try after a while.
+[07:06:08]   yahoo GC=F 失败: Too Many Requests. Rate limited. Try after a while.
+[07:06:09]   yahoo DX-Y.NYB 失败: Too Many Requests. Rate limited. Try after a while.
+[07:06:10]   yahoo ^IXIC 失败: Too Many Requests. Rate limited. Try after a while.
+[07:06:10]   yahoo HYG 失败: Too Many Requests. Rate limited. Try after a while.
+[07:06:11]   yahoo IEI 失败: Too Many Requests. Rate limited. Try after a while.
+[07:06:11]   ✓ vix               14.9200  (FRED VIXCLS, 2026-08-31)
+[07:06:11]   ✓ us_10y             4.7500  (FRED DGS10, 2026-08-31)
+[07:06:11]   ✓ brent             88.2400  (FRED DCOILBRENTEU, 2026-08-25)
+[07:06:11] Bank of England …
+[07:06:12]   ✓ uk_10y             5.0254  (BoE IUDMNPY, 2026-08-27)
+[07:06:12] 缺失字段 ['gbp_cny', 'gold', 'dxy', 'nasdaq']，尝试 Claude 兜底 …
+[07:06:12]   ⚠ brent 数据日期 2026-08-25，已 6 个交易日未更新，剔除出评分
+[07:06:12] 完成。写入 public/data。缺失字段: ['gbp_cny', 'gold', 'dxy', 'nasdaq']

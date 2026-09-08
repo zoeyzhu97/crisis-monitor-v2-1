@@ -1,24 +1,30 @@
 {
-  "fetched_at": "2026-09-07T17:53:15.478243+00:00",
-  "date": "2026-09-07",
+  "fetched_at": "2026-09-08T06:52:52.811602+00:00",
+  "date": "2026-09-08",
   "values": {
+    "credit_spread": 265.0,
     "vix": 15.3,
     "us_10y": 4.784,
-    "gbp_cny": 9.0898,
-    "brent": 96.28,
-    "gold": 4476.6001,
-    "dxy": 98.903,
+    "gbp_cny": 9.0559,
+    "brent": 98.44,
+    "gold": 4450.3999,
+    "dxy": 98.859,
     "nasdaq": 26506.9902,
     "hyg": 79.16,
     "iei": 115.66,
-    "uk_10y": 5.0843,
-    "credit_spread": 263.0
+    "uk_10y": 5.0843
   },
   "meta": {
+    "credit_spread": {
+      "source": "Autario mirror / FRED BAMLH0A0HYM2",
+      "as_of": "2026-09-03",
+      "stale_bdays": 2,
+      "stale": false
+    },
     "vix": {
       "source": "Yahoo ^VIX",
       "as_of": "2026-09-07",
-      "stale_bdays": 0,
+      "stale_bdays": 1,
       "stale": false
     },
     "us_10y": {
@@ -29,25 +35,25 @@
     },
     "gbp_cny": {
       "source": "Yahoo GBPCNY=X",
-      "as_of": "2026-09-07",
+      "as_of": "2026-09-08",
       "stale_bdays": 0,
       "stale": false
     },
     "brent": {
       "source": "Yahoo BZ=F",
-      "as_of": "2026-09-07",
+      "as_of": "2026-09-08",
       "stale_bdays": 0,
       "stale": false
     },
     "gold": {
       "source": "Yahoo GC=F",
-      "as_of": "2026-09-07",
+      "as_of": "2026-09-08",
       "stale_bdays": 0,
       "stale": false
     },
     "dxy": {
       "source": "Yahoo DX-Y.NYB",
-      "as_of": "2026-09-07",
+      "as_of": "2026-09-08",
       "stale_bdays": 0,
       "stale": false
     },
@@ -72,18 +78,12 @@
     "uk_10y": {
       "source": "BoE IUDMNPY",
       "as_of": "2026-09-03",
-      "stale_bdays": 2,
+      "stale_bdays": 3,
       "stale": false
-    },
-    "credit_spread": {
-      "source": "FRED BAMLH0A0HYM2",
-      "as_of": "2026-08-31",
-      "stale_bdays": 5,
-      "stale": true
     }
   },
   "derived": {
-    "credit_spread_20d_change": -15.0,
+    "credit_spread_20d_change": -6.0,
     "credit_spread_20d_min": 260.0,
     "hy_proxy_20d_pct": 0.2,
     "hy_proxy_ratio": 0.6844,
@@ -93,11 +93,9 @@
   },
   "freshness": {
     "max_stale_bdays_allowed": 3,
-    "excluded_from_score": [
-      "credit_spread"
-    ],
-    "oldest_key": "credit_spread",
-    "oldest_bdays": 5,
-    "oldest_as_of": "2026-08-31"
+    "excluded_from_score": [],
+    "oldest_key": "uk_10y",
+    "oldest_bdays": 3,
+    "oldest_as_of": "2026-09-03"
   }
 }

@@ -4,6 +4,7 @@
 
 数据来源（全部免费，无需 API Key）：
   FRED  (fredgraph.csv 公开端点)   HY OAS、VIX、美国10Y、布伦特（备用）
+  Autario (FRED 数据镜像)          GitHub 运行器无法连通 FRED 时的 HY OAS 备用
   Yahoo Finance (yfinance)         VIX、美国10Y、英镑/人民币、布伦特、黄金、DXY、纳斯达克、HYG、IEI
   Bank of England IADB (CSV)       英国10年期国债票面收益率
 
@@ -97,6 +98,49 @@ def uk_bank_holidays(year):
     return holidays
 
 
+def us_market_holidays(year):
+    """美国证券市场主要休市日，用于美国日度市场指标的新鲜度计数。"""
+    def nth_weekday(month, weekday, n):
+        d = date(year, month, 1)
+        return d + timedelta(days=(weekday - d.weekday()) % 7 + 7 * (n - 1))
+
+    def last_weekday(month, weekday):
+        d = date(year, month + 1, 1) - timedelta(days=1) if month < 12 else date(year, 12, 31)
+        return d - timedelta(days=(d.weekday() - weekday) % 7)
+
+    def observed(d):
+        if d.weekday() == 5:
+            return d - timedelta(days=1)
+        if d.weekday() == 6:
+            return d + timedelta(days=1)
+        return d
+
+    # Anonymous Gregorian algorithm, Good Friday = Easter - 2 days.
+    a, b, c = year % 19, year // 100, year % 100
+    d, e = b // 4, b % 4
+    f, g = (b + 8) // 25, (b - (b + 8) // 25 + 1) // 3
+    h = (19 * a + b - d - g + 15) % 30
+    i, k = c // 4, c % 4
+    l = (32 + 2 * e + 2 * i - h - k) % 7
+    m = (a + 11 * h + 22 * l) // 451
+    month = (h + l - 7 * m + 114) // 31
+    day = (h + l - 7 * m + 114) % 31 + 1
+    easter = date(year, month, day)
+
+    return {
+        observed(date(year, 1, 1)),
+        nth_weekday(1, 0, 3),       # Martin Luther King Jr. Day
+        nth_weekday(2, 0, 3),       # Presidents' Day
+        easter - timedelta(days=2), # Good Friday
+        last_weekday(5, 0),         # Memorial Day
+        observed(date(year, 6, 19)),
+        observed(date(year, 7, 4)),
+        nth_weekday(9, 0, 1),       # Labor Day
+        nth_weekday(11, 3, 4),      # Thanksgiving
+        observed(date(year, 12, 25)),
+    }
+
+
 def business_days_between(as_of, today, holidays=None):
     """as_of/today 为 YYYY-MM-DD；返回两者之间的工作日数（周一至周五），as_of 当天不计。"""
     try:
@@ -176,6 +220,32 @@ def fred_public_dashboard_oas(n=100):
     if not parsed:
         raise RuntimeError("FRED public dashboard OAS 表格无数据")
     return list(reversed(parsed))[-n:]
+
+
+def autario_oas(n=400):
+    """Autario 对 FRED BAMLH0A0HYM2 的公开镜像，返回日期升序的百分比数据。"""
+    dataset_id = "e4a3e9e1-0e3f-4bc3-8b6f-bd8f0eb8c8c9"
+    limit = min(max(n, 30), 400)
+    url = (
+        f"https://autario.com/api/v1/public/datasets/{dataset_id}/data"
+        f"?limit={limit}&non_null_only=true"
+    )
+    response = requests.get(url, timeout=TIMEOUT, headers=UA)
+    response.raise_for_status()
+    payload = response.json()
+    rows = []
+    for row in payload.get("data", []):
+        try:
+            d = datetime.strptime(row["date"], "%Y-%m-%d").strftime("%Y-%m-%d")
+            v = float(row["value"])
+            if 1.5 <= v <= 30:
+                rows.append((d, v))
+        except (KeyError, TypeError, ValueError):
+            continue
+    rows.sort(key=lambda item: item[0])
+    if len(rows) < 21:
+        raise RuntimeError("Autario OAS 镜像有效数据少于 21 条")
+    return rows[-n:]
 
 
 def cached_oas():
@@ -354,16 +424,31 @@ def fetch_all():
     # ── FRED ──
     log("FRED …")
     oas_series = []
-    try:
-        oas_series = [(d, v * 100) for d, v in fred_series("BAMLH0A0HYM2", 400)]  # % → bps
-        put("credit_spread", oas_series[-1][1], "FRED BAMLH0A0HYM2", oas_series[-1][0])
-    except Exception as e:
-        log(f"  FRED OAS 失败: {e}")
+    # GitHub hosted runner 长期无法连通 St. Louis Fed 域名，在 Actions 中先读 FRED 镜像。
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        try:
+            oas_series = [(d, v * 100) for d, v in autario_oas(400)]
+            put("credit_spread", oas_series[-1][1], "Autario mirror / FRED BAMLH0A0HYM2", oas_series[-1][0])
+        except Exception as e:
+            log(f"  Autario OAS 镜像失败: {e}")
+    if not oas_series:
+        try:
+            oas_series = [(d, v * 100) for d, v in fred_series("BAMLH0A0HYM2", 400)]  # % → bps
+            put("credit_spread", oas_series[-1][1], "FRED BAMLH0A0HYM2", oas_series[-1][0])
+        except Exception as e:
+            log(f"  FRED OAS 失败: {e}")
+    if not oas_series:
         try:
             oas_series = [(d, v * 100) for d, v in fred_public_dashboard_oas(100)]
             put("credit_spread", oas_series[-1][1], "FRED BAMLH0A0HYM2 (public dashboard)", oas_series[-1][0])
-        except Exception as e2:
-            log(f"  FRED public dashboard OAS 备份失败: {e2}")
+        except Exception as e:
+            log(f"  FRED public dashboard OAS 备份失败: {e}")
+    if not oas_series and os.environ.get("GITHUB_ACTIONS") != "true":
+        try:
+            oas_series = [(d, v * 100) for d, v in autario_oas(400)]
+            put("credit_spread", oas_series[-1][1], "Autario mirror / FRED BAMLH0A0HYM2", oas_series[-1][0])
+        except Exception as e:
+            log(f"  Autario OAS 镜像失败: {e}")
 
     # ── Yahoo ──
     log("Yahoo Finance …")
@@ -446,7 +531,12 @@ def main():
     meta = {}
     for k, v in fields.items():
         holiday_years = range(int(v["as_of"][:4]), int(today[:4]) + 1)
-        holidays = set().union(*(uk_bank_holidays(y) for y in holiday_years)) if k == "uk_10y" else None
+        if k == "uk_10y":
+            holidays = set().union(*(uk_bank_holidays(y) for y in holiday_years))
+        elif k in {"credit_spread", "vix", "us_10y", "nasdaq", "hyg", "iei"}:
+            holidays = set().union(*(us_market_holidays(y) for y in holiday_years))
+        else:
+            holidays = None
         bd = business_days_between(v["as_of"], today, holidays)
         meta[k] = {"source": v["source"], "as_of": v["as_of"], "stale_bdays": bd,
                    "stale": bd is not None and bd > MAX_STALE_BDAYS}

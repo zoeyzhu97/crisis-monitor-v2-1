@@ -1,18 +1,18 @@
 {
-  "fetched_at": "2026-09-08T06:52:52.811602+00:00",
+  "fetched_at": "2026-09-08T16:48:37.005840+00:00",
   "date": "2026-09-08",
   "values": {
     "credit_spread": 265.0,
-    "vix": 15.3,
-    "us_10y": 4.784,
-    "gbp_cny": 9.0559,
-    "brent": 98.44,
-    "gold": 4450.3999,
-    "dxy": 98.859,
-    "nasdaq": 26506.9902,
-    "hyg": 79.16,
-    "iei": 115.66,
-    "uk_10y": 5.0843
+    "vix": 15.28,
+    "us_10y": 4.79,
+    "gbp_cny": 9.0817,
+    "brent": 97.37,
+    "gold": 4438.7998,
+    "dxy": 98.901,
+    "nasdaq": 26467.9043,
+    "hyg": 79.165,
+    "iei": 115.595,
+    "uk_10y": 5.0737
   },
   "meta": {
     "credit_spread": {
@@ -23,14 +23,14 @@
     },
     "vix": {
       "source": "Yahoo ^VIX",
-      "as_of": "2026-09-07",
-      "stale_bdays": 1,
+      "as_of": "2026-09-08",
+      "stale_bdays": 0,
       "stale": false
     },
     "us_10y": {
       "source": "Yahoo ^TNX",
-      "as_of": "2026-09-04",
-      "stale_bdays": 1,
+      "as_of": "2026-09-08",
+      "stale_bdays": 0,
       "stale": false
     },
     "gbp_cny": {
@@ -59,43 +59,43 @@
     },
     "nasdaq": {
       "source": "Yahoo ^IXIC",
-      "as_of": "2026-09-04",
-      "stale_bdays": 1,
+      "as_of": "2026-09-08",
+      "stale_bdays": 0,
       "stale": false
     },
     "hyg": {
       "source": "Yahoo HYG",
-      "as_of": "2026-09-04",
-      "stale_bdays": 1,
+      "as_of": "2026-09-08",
+      "stale_bdays": 0,
       "stale": false
     },
     "iei": {
       "source": "Yahoo IEI",
-      "as_of": "2026-09-04",
-      "stale_bdays": 1,
+      "as_of": "2026-09-08",
+      "stale_bdays": 0,
       "stale": false
     },
     "uk_10y": {
       "source": "BoE IUDMNPY",
-      "as_of": "2026-09-03",
-      "stale_bdays": 3,
+      "as_of": "2026-09-04",
+      "stale_bdays": 2,
       "stale": false
     }
   },
   "derived": {
     "credit_spread_20d_change": -6.0,
     "credit_spread_20d_min": 260.0,
-    "hy_proxy_20d_pct": 0.2,
-    "hy_proxy_ratio": 0.6844,
-    "nasdaq_drawdown_pct": -2.17,
-    "nasdaq_20d_pct": -0.69,
+    "hy_proxy_20d_pct": 0.17,
+    "hy_proxy_ratio": 0.6848,
+    "nasdaq_drawdown_pct": -2.31,
+    "nasdaq_20d_pct": -0.52,
     "nasdaq_52w_high": 27093.9
   },
   "freshness": {
     "max_stale_bdays_allowed": 3,
     "excluded_from_score": [],
-    "oldest_key": "uk_10y",
-    "oldest_bdays": 3,
+    "oldest_key": "credit_spread",
+    "oldest_bdays": 2,
     "oldest_as_of": "2026-09-03"
   }
 }

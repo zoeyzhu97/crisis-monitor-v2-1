@@ -1,101 +1,101 @@
 {
-  "fetched_at": "2026-09-24T17:29:25.802689+00:00",
-  "date": "2026-09-24",
+  "fetched_at": "2026-09-25T17:28:58.101600+00:00",
+  "date": "2026-09-25",
   "values": {
-    "credit_spread": 268.0,
-    "vix": 15.43,
-    "us_10y": 5.141,
-    "gbp_cny": 8.8791,
-    "brent": 105.9,
-    "gold": 4301.0,
-    "dxy": 101.247,
-    "nasdaq": 26909.416,
-    "hyg": 77.935,
-    "iei": 113.59,
-    "uk_10y": 5.1907
+    "credit_spread": 273.0,
+    "vix": 15.0,
+    "us_10y": 5.192,
+    "gbp_cny": 8.8888,
+    "brent": 96.9,
+    "gold": 4325.5,
+    "dxy": 101.056,
+    "nasdaq": 27091.8145,
+    "hyg": 77.735,
+    "iei": 113.6033,
+    "uk_10y": 5.291
   },
   "meta": {
     "credit_spread": {
       "source": "Autario mirror / FRED BAMLH0A0HYM2",
-      "as_of": "2026-09-22",
+      "as_of": "2026-09-23",
       "stale_bdays": 2,
       "stale": false
     },
     "vix": {
       "source": "Yahoo ^VIX",
-      "as_of": "2026-09-24",
+      "as_of": "2026-09-25",
       "stale_bdays": 0,
       "stale": false
     },
     "us_10y": {
       "source": "Yahoo ^TNX",
-      "as_of": "2026-09-24",
+      "as_of": "2026-09-25",
       "stale_bdays": 0,
       "stale": false
     },
     "gbp_cny": {
       "source": "Yahoo GBPCNY=X",
-      "as_of": "2026-09-24",
+      "as_of": "2026-09-25",
       "stale_bdays": 0,
       "stale": false
     },
     "brent": {
       "source": "Yahoo BZ=F",
-      "as_of": "2026-09-24",
+      "as_of": "2026-09-25",
       "stale_bdays": 0,
       "stale": false
     },
     "gold": {
       "source": "Yahoo GC=F",
-      "as_of": "2026-09-24",
+      "as_of": "2026-09-25",
       "stale_bdays": 0,
       "stale": false
     },
     "dxy": {
       "source": "Yahoo DX-Y.NYB",
-      "as_of": "2026-09-24",
+      "as_of": "2026-09-25",
       "stale_bdays": 0,
       "stale": false
     },
     "nasdaq": {
       "source": "Yahoo ^IXIC",
-      "as_of": "2026-09-24",
+      "as_of": "2026-09-25",
       "stale_bdays": 0,
       "stale": false
     },
     "hyg": {
       "source": "Yahoo HYG",
-      "as_of": "2026-09-24",
+      "as_of": "2026-09-25",
       "stale_bdays": 0,
       "stale": false
     },
     "iei": {
       "source": "Yahoo IEI",
-      "as_of": "2026-09-24",
+      "as_of": "2026-09-25",
       "stale_bdays": 0,
       "stale": false
     },
     "uk_10y": {
       "source": "BoE IUDMNPY",
-      "as_of": "2026-09-22",
+      "as_of": "2026-09-23",
       "stale_bdays": 2,
       "stale": false
     }
   },
   "derived": {
-    "credit_spread_20d_change": -2.0,
+    "credit_spread_20d_change": 6.0,
     "credit_spread_20d_min": 260.0,
-    "hy_proxy_20d_pct": 0.32,
-    "hy_proxy_ratio": 0.6861,
-    "nasdaq_drawdown_pct": -0.78,
-    "nasdaq_20d_pct": 2.9,
-    "nasdaq_52w_high": 27122.09
+    "hy_proxy_20d_pct": -0.11,
+    "hy_proxy_ratio": 0.6843,
+    "nasdaq_drawdown_pct": -0.56,
+    "nasdaq_20d_pct": 2.07,
+    "nasdaq_52w_high": 27244.28
   },
   "freshness": {
     "max_stale_bdays_allowed": 3,
     "excluded_from_score": [],
     "oldest_key": "credit_spread",
     "oldest_bdays": 2,
-    "oldest_as_of": "2026-09-22"
+    "oldest_as_of": "2026-09-23"
   }
 }

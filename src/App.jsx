@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { businessDaysBetween, liveFreshness } from "./freshness";
 
 // ═══════════════════════════════════════════════════════════
 // 指标定义
@@ -90,36 +91,38 @@ function rc(s) { return s == null ? "#9C948A" : s <= 2.5 ? "#2E7D32" : s <= 5 ? 
 function rbg(s) { return s == null ? "#F2EFE9" : s <= 2.5 ? "#E8F5E9" : s <= 5 ? "#FFF8E1" : s <= 7.5 ? "#FFF3E0" : "#FFEBEE"; }
 function rl(s) { return s == null ? "等待数据" : s <= 2.5 ? "低风险" : s <= 5 ? "中等" : s <= 7.5 ? "高风险" : "极高风险"; }
 
-function daysBetween(a, b) { return Math.round((new Date(a) - new Date(b)) / 86400000); }
-
 // ═══════════════════════════════════════════════════════════
 // 三层危机评估
 // ═══════════════════════════════════════════════════════════
-function assessCrisisLayers(values, derived) {
+function assessCrisisLayers(values, derived, meta) {
   if (!values) return null;
-  const dd = derived?.nasdaq_drawdown_pct;
+  const brent = isStale(meta, "brent") ? null : values.brent;
+  const uk10y = isStale(meta, "uk_10y") ? null : values.uk_10y;
+  const dd = isStale(meta, "nasdaq") ? null : derived?.nasdaq_drawdown_pct;
   const valStatus = dd == null ? "monitor" : dd < -30 ? "critical" : dd < -20 ? "high" : dd < -10 ? "elevated" : "normal";
   const layers = [
     {
       name: "外生冲击层", icon: "⛽",
-      status: values.brent > 130 ? "critical" : values.brent > 105 ? "high" : values.brent > 85 ? "elevated" : "normal",
-      desc: values.brent > 130 ? "能源危机级别，类似1973/2022年。滞胀陷阱风险极高。"
-        : values.brent > 105 ? "油价偏高，通胀压力上升，央行降息空间被压缩。"
-        : values.brent > 85 ? "油价温和偏高，尚未构成系统性威胁。"
+      status: brent == null ? "monitor" : brent > 130 ? "critical" : brent > 105 ? "high" : brent > 85 ? "elevated" : "normal",
+      desc: brent == null ? "布伦特原油数据缺失或过期，暂不判断。"
+        : brent > 130 ? "能源危机级别，类似1973/2022年。滞胀陷阱风险极高。"
+        : brent > 105 ? "油价偏高，通胀压力上升，央行降息空间被压缩。"
+        : brent > 85 ? "油价温和偏高，尚未构成系统性威胁。"
         : "能源价格正常，无外生冲击。",
     },
     {
       name: "主权债务层", icon: "🏛",
-      status: values.uk_10y > 5.5 ? "critical" : values.uk_10y > 5.0 ? "high" : values.uk_10y > 4.5 ? "elevated" : "normal",
-      desc: values.uk_10y > 5.5 ? "英国国债收益率超过2008年水平，主权债务危机信号。"
-        : values.uk_10y > 5.0 ? "英国国债收益率处于高风险区间，财政脆弱性暴露。远超2022年mini-budget危机水平。"
-        : values.uk_10y > 4.5 ? "英国国债收益率偏高，需关注秋季预算和财政走势。"
+      status: uk10y == null ? "monitor" : uk10y > 5.5 ? "critical" : uk10y > 5.0 ? "high" : uk10y > 4.5 ? "elevated" : "normal",
+      desc: uk10y == null ? "英国国债收益率数据缺失或过期，暂不判断。"
+        : uk10y > 5.5 ? "英国国债收益率超过2008年水平，主权债务危机信号。"
+        : uk10y > 5.0 ? "英国国债收益率处于高风险区间，财政脆弱性暴露。远超2022年mini-budget危机水平。"
+        : uk10y > 4.5 ? "英国国债收益率偏高，需关注秋季预算和财政走势。"
         : "英国国债收益率在可控范围内。",
     },
     {
       name: "估值泡沫层", icon: "🤖",
       status: valStatus,
-      desc: dd == null ? "缺少纳斯达克回撤数据。"
+      desc: dd == null ? "纳斯达克回撤数据缺失或过期，暂不判断。"
         : `纳斯达克距 52 周高点回撤 ${dd.toFixed(1)}%，近 20 日 ${derived.nasdaq_20d_pct >= 0 ? "+" : ""}${derived.nasdaq_20d_pct?.toFixed(1)}%。`
           + (dd < -20 ? " 估值重估已在进行，参考2000/2022年。" : dd < -10 ? " 已进入调整区间。" : " 尚未出现估值重估迹象，但AI概念集中度风险仍在，回撤是确认信号而非预警。"),
     },
@@ -129,8 +132,10 @@ function assessCrisisLayers(values, derived) {
   const statusBg = { critical: "#FFEBEE", high: "#FFF3E0", elevated: "#FFF8E1", normal: "#E8F5E9", monitor: "#E3F2FD" };
 
   const active = layers.filter(l => l.status === "critical" || l.status === "high").length;
+  const unknown = layers.filter(l => l.status === "monitor").length;
   let r;
-  if (active === 0) r = { label: "当前无叠加危机信号", desc: "如果发生调整，大概率是局部冲击或流动性事件，参考1998/2018/2020模式。", timeline: "预计跌15-25%，央行干预后3-6个月恢复。", color: "#2E7D32" };
+  if (unknown > 0) r = { label: "数据不完整，暂缓完整预判", desc: `${unknown} 个风险层的数据缺失或过期；其余风险层中有 ${active} 个处于高风险。`, timeline: "等待数据更新后重新评估。", color: "#1565C0" };
+  else if (active === 0) r = { label: "当前无叠加危机信号", desc: "如果发生调整，大概率是局部冲击或流动性事件，参考1998/2018/2020模式。", timeline: "预计跌15-25%，央行干预后3-6个月恢复。", color: "#2E7D32" };
   else if (active === 1) r = { label: "单层压力", desc: "一个风险层处于高位，但未形成叠加。参考2011欧债或2015能源模式。", timeline: "预计跌20-30%，1-2年恢复至前高。", color: "#F9A825" };
   else if (active === 2) r = { label: "双层叠加", desc: "两个风险层同时恶化。参考2007-2009模式。如果央行因通胀无法降息，恢复将显著更慢。", timeline: "预计跌35-50%，3-5年恢复至前高。", color: "#E65100" };
   else r = { label: "三层叠加（最危险）", desc: "能源冲击+主权债务危机+估值重估同时发生。央行被通胀困住无法救市（滞胀陷阱）。", timeline: "预计跌50-70%，恢复至前高可能需要5-10年。不会出现V型反弹。", color: "#C62828" };
@@ -224,7 +229,7 @@ function Sparkline({ points, color }) {
   );
 }
 
-function IndicatorCard({ ind, value, score, meta, derived, today }) {
+function IndicatorCard({ ind, value, score, meta, derived }) {
   const [open, setOpen] = useState(false);
   const staleB = meta?.stale_bdays ?? null;
   const isStaleCard = !!meta?.stale;
@@ -234,7 +239,7 @@ function IndicatorCard({ ind, value, score, meta, derived, today }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
         <span style={{ fontSize: 12, color: "#6B635A" }}>{ind.desc}</span>
         {isStaleCard
-          ? <span style={{ fontSize: 10, fontWeight: 600, color: "#6B635A", background: "#EDE9E1", padding: "3px 10px", borderRadius: 20 }}>数据过期，未计分</span>
+          ? <span style={{ fontSize: 10, fontWeight: 600, color: "#6B635A", background: "#EDE9E1", padding: "3px 10px", borderRadius: 20 }}>{ind.isPrimary && score != null ? "OAS 已过期，改用代理计分" : "数据过期，未计分"}</span>
           : <span style={{ fontSize: 10, fontWeight: 600, color: rc(score), background: rbg(score), padding: "3px 10px", borderRadius: 20 }}>{rl(score)}</span>}
       </div>
       <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
@@ -267,20 +272,26 @@ export default function App() {
   const [history, setHistory] = useState([]);
   const [series, setSeries] = useState(null);
   const [error, setError] = useState(null);
+  const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
-    loadJSON("latest.json").then(setLatest).catch(e => setError(`无法读取 latest.json（${e.message}）。请先运行 python3 scripts/fetch_daily.py，或检查 GitHub Actions 是否已执行。`));
+    const refresh = () => loadJSON("latest.json").then(data => { setLatest(data); setError(null); })
+      .catch(e => setError(`无法读取 latest.json（${e.message}）。请检查 GitHub Actions 是否已执行。`));
+    refresh();
     loadJSON("history.json").then(setHistory).catch(() => {});
     loadJSON("series.json").then(setSeries).catch(() => {});
+    const timer = setInterval(() => { setNow(new Date()); refresh(); }, 10 * 60 * 1000);
+    return () => clearInterval(timer);
   }, []);
 
-  const values = latest?.values, derived = latest?.derived, meta = latest?.meta;
-  const today = latest?.date ?? new Date().toISOString().slice(0, 10);
+  const values = latest?.values, derived = latest?.derived;
+  const today = now.toISOString().slice(0, 10);
+  const { meta, freshness: fresh } = liveFreshness(latest?.meta, today);
   const { scores, overall, avg, floored, excluded } = computeAll(values, derived, meta);
-  const fresh = latest?.freshness;
-  const advice = nasdaqAdvice(overall, values?.credit_spread, derived?.credit_spread_20d_change);
-  const crisis = assessCrisisLayers(values, derived);
-  const fetchedAgo = latest ? daysBetween(new Date().toISOString().slice(0, 10), latest.date) : null;
+  const oasStale = isStale(meta, "credit_spread");
+  const advice = nasdaqAdvice(overall, oasStale ? null : values?.credit_spread, oasStale ? null : derived?.credit_spread_20d_change);
+  const crisis = assessCrisisLayers(values, derived, meta);
+  const fetchedAgo = latest ? businessDaysBetween(latest.date, today) : null;
   const histScored = history.map(h => ({ date: h.date, score: computeAll(h, h, null).overall })).filter(h => h.score != null);
 
   return (
@@ -290,9 +301,9 @@ export default function App() {
         <h1 style={{ fontSize: 22, fontWeight: 800, margin: "4px 0" }}>全球金融危机监测仪表盘</h1>
         <p style={{ fontSize: 12, color: "#9C948A", margin: 0 }}>信用利差驱动 · 三层危机模型 · 每日自动抓取</p>
         {latest && (
-          <div style={{ fontSize: 11, color: fetchedAgo > 2 ? "#E65100" : "#9C948A", marginTop: 6 }}>
+          <div style={{ fontSize: 11, color: fetchedAgo > 1 ? "#E65100" : "#9C948A", marginTop: 6 }}>
             数据抓取于 {new Date(latest.fetched_at).toLocaleString("zh-CN")}
-            {fetchedAgo > 2 && ` · 已 ${fetchedAgo} 天未更新，请检查自动任务`}
+            {fetchedAgo > 1 && ` · 已 ${fetchedAgo} 个工作日未抓取，请检查自动任务`}
           </div>
         )}
       </header>
@@ -346,11 +357,11 @@ export default function App() {
         </div>
         <Sparkline points={series?.credit_spread} color={rc(scores[0])} />
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 8, margin: "12px 0" }}>
-          <Stat label="OAS 水平" v={values?.credit_spread != null ? `${Math.round(values.credit_spread)} bps` : "—"} />
-          <Stat label="20 日变化" v={derived?.credit_spread_20d_change != null ? `${derived.credit_spread_20d_change >= 0 ? "+" : ""}${Math.round(derived.credit_spread_20d_change)} bps` : "—"}
-            warn={derived?.credit_spread_20d_change >= SPEED_THRESHOLDS[0]} />
-          <Stat label="HYG/IEI 比值 20 日" v={derived?.hy_proxy_20d_pct != null ? `${derived.hy_proxy_20d_pct >= 0 ? "+" : ""}${derived.hy_proxy_20d_pct.toFixed(2)}%` : "—"}
-            warn={derived?.hy_proxy_20d_pct != null && derived.hy_proxy_20d_pct < -2}
+          <Stat label="OAS 水平" v={!oasStale && values?.credit_spread != null ? `${Math.round(values.credit_spread)} bps` : "—"} />
+          <Stat label="20 日变化" v={!oasStale && derived?.credit_spread_20d_change != null ? `${derived.credit_spread_20d_change >= 0 ? "+" : ""}${Math.round(derived.credit_spread_20d_change)} bps` : "—"}
+            warn={!oasStale && derived?.credit_spread_20d_change >= SPEED_THRESHOLDS[0]} />
+          <Stat label="HYG/IEI 比值 20 日" v={!isStale(meta, "hyg") && !isStale(meta, "iei") && derived?.hy_proxy_20d_pct != null ? `${derived.hy_proxy_20d_pct >= 0 ? "+" : ""}${derived.hy_proxy_20d_pct.toFixed(2)}%` : "—"}
+            warn={!isStale(meta, "hyg") && !isStale(meta, "iei") && derived?.hy_proxy_20d_pct != null && derived.hy_proxy_20d_pct < -2}
             hint="实时代理，久期匹配。跌超2%通常对应利差扩大约100 bps，可比 FRED 早一天看到。" />
         </div>
         {[
@@ -399,7 +410,7 @@ export default function App() {
 
       {/* 指标网格 */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 12, marginBottom: 16 }}>
-        {INDICATORS.map((ind, i) => <IndicatorCard key={ind.key} ind={ind} value={values ? values[ind.key] : null} score={scores[i]} meta={meta?.[ind.key]} derived={derived} today={today} />)}
+        {INDICATORS.map((ind, i) => <IndicatorCard key={ind.key} ind={ind} value={values ? values[ind.key] : null} score={scores[i]} meta={meta?.[ind.key]} derived={derived} />)}
       </div>
 
       {/* 危机比较表 */}

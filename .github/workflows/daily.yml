@@ -6,6 +6,8 @@ on:
   schedule:
     # UTC 12:30 = 伦敦 13:30（夏令时）。FRED 的 HY OAS 在美东上午更新，此时已可拿到前一交易日数据。
     - cron: "30 12 * * 1-5"
+    # GitHub 的定时任务可能延迟或漏跑；工作日晚些时候再尝试一次。
+    - cron: "30 19 * * 1-5"
   workflow_dispatch:
   push:
     branches: [main]

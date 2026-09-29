@@ -1,17 +1,17 @@
 {
-  "fetched_at": "2026-09-29T12:00:18.386159+00:00",
+  "fetched_at": "2026-09-29T18:13:10.757176+00:00",
   "date": "2026-09-29",
   "values": {
     "credit_spread": 293.0,
-    "vix": 15.89,
-    "us_10y": 5.24,
-    "gbp_cny": 8.8844,
-    "brent": 96.55,
-    "gold": 4189.6001,
-    "dxy": 101.298,
-    "nasdaq": 26820.3809,
-    "hyg": 77.54,
-    "iei": 113.44,
+    "vix": 16.4,
+    "us_10y": 5.287,
+    "gbp_cny": 8.8682,
+    "brent": 96.65,
+    "gold": 4193.2998,
+    "dxy": 101.478,
+    "nasdaq": 26752.3164,
+    "hyg": 77.22,
+    "iei": 113.37,
     "uk_10y": 5.3321
   },
   "meta": {
@@ -29,8 +29,8 @@
     },
     "us_10y": {
       "source": "Yahoo ^TNX",
-      "as_of": "2026-09-28",
-      "stale_bdays": 1,
+      "as_of": "2026-09-29",
+      "stale_bdays": 0,
       "stale": false
     },
     "gbp_cny": {
@@ -59,20 +59,20 @@
     },
     "nasdaq": {
       "source": "Yahoo ^IXIC",
-      "as_of": "2026-09-28",
-      "stale_bdays": 1,
+      "as_of": "2026-09-29",
+      "stale_bdays": 0,
       "stale": false
     },
     "hyg": {
       "source": "Yahoo HYG",
-      "as_of": "2026-09-28",
-      "stale_bdays": 1,
+      "as_of": "2026-09-29",
+      "stale_bdays": 0,
       "stale": false
     },
     "iei": {
       "source": "Yahoo IEI",
-      "as_of": "2026-09-28",
-      "stale_bdays": 1,
+      "as_of": "2026-09-29",
+      "stale_bdays": 0,
       "stale": false
     },
     "uk_10y": {
@@ -85,10 +85,10 @@
   "derived": {
     "credit_spread_20d_change": 33.0,
     "credit_spread_20d_min": 260.0,
-    "hy_proxy_20d_pct": -0.4,
-    "hy_proxy_ratio": 0.6835,
-    "nasdaq_drawdown_pct": -1.56,
-    "nasdaq_20d_pct": 1.58,
+    "hy_proxy_20d_pct": -0.86,
+    "hy_proxy_ratio": 0.6811,
+    "nasdaq_drawdown_pct": -1.81,
+    "nasdaq_20d_pct": 1.45,
     "nasdaq_52w_high": 27244.28
   },
   "freshness": {

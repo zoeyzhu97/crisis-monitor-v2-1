@@ -1,24 +1,24 @@
 {
-  "fetched_at": "2026-09-30T18:05:14.328393+00:00",
+  "fetched_at": "2026-09-30T23:08:28.003886+00:00",
   "date": "2026-09-30",
   "values": {
-    "credit_spread": 302.0,
-    "vix": 15.81,
-    "us_10y": 5.302,
-    "gbp_cny": 8.8699,
-    "brent": 98.56,
-    "gold": 4179.7998,
-    "dxy": 101.423,
-    "nasdaq": 27042.043,
-    "hyg": 77.29,
-    "iei": 113.355,
+    "credit_spread": 308.0,
+    "vix": 16.34,
+    "us_10y": 5.293,
+    "gbp_cny": 8.9016,
+    "brent": 97.66,
+    "gold": 4183.7002,
+    "dxy": 101.461,
+    "nasdaq": 26861.0645,
+    "hyg": 77.21,
+    "iei": 113.44,
     "uk_10y": 5.3829
   },
   "meta": {
     "credit_spread": {
       "source": "Autario mirror / FRED BAMLH0A0HYM2",
-      "as_of": "2026-09-28",
-      "stale_bdays": 2,
+      "as_of": "2026-09-29",
+      "stale_bdays": 1,
       "stale": false
     },
     "vix": {
@@ -35,7 +35,7 @@
     },
     "gbp_cny": {
       "source": "Yahoo GBPCNY=X",
-      "as_of": "2026-09-30",
+      "as_of": "2026-10-01",
       "stale_bdays": 0,
       "stale": false
     },
@@ -83,18 +83,18 @@
     }
   },
   "derived": {
-    "credit_spread_20d_change": 39.0,
-    "credit_spread_20d_min": 263.0,
-    "hy_proxy_20d_pct": -0.41,
-    "hy_proxy_ratio": 0.6818,
-    "nasdaq_drawdown_pct": -0.74,
-    "nasdaq_20d_pct": 3.61,
+    "credit_spread_20d_change": 43.0,
+    "credit_spread_20d_min": 265.0,
+    "hy_proxy_20d_pct": -0.59,
+    "hy_proxy_ratio": 0.6806,
+    "nasdaq_drawdown_pct": -1.41,
+    "nasdaq_20d_pct": 2.92,
     "nasdaq_52w_high": 27244.28
   },
   "freshness": {
     "max_stale_bdays_allowed": 3,
     "excluded_from_score": [],
-    "oldest_key": "credit_spread",
+    "oldest_key": "uk_10y",
     "oldest_bdays": 2,
     "oldest_as_of": "2026-09-28"
   }

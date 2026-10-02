@@ -460,5 +460,26 @@
   "nasdaq_drawdown_pct": -1.37,
   "nasdaq_20d_pct": 2.49,
   "nasdaq_52w_high": 27244.28
+ },
+ {
+  "date": "2026-10-02",
+  "credit_spread": 312.0,
+  "vix": 15.81,
+  "us_10y": 5.287,
+  "gbp_cny": 8.8778,
+  "brent": 102.24,
+  "gold": 4167.1001,
+  "dxy": 101.924,
+  "nasdaq": 27180.75,
+  "hyg": 76.895,
+  "iei": 113.185,
+  "uk_10y": 5.3714,
+  "credit_spread_20d_change": 46.0,
+  "credit_spread_20d_min": 265.0,
+  "hy_proxy_20d_pct": -0.76,
+  "hy_proxy_ratio": 0.6794,
+  "nasdaq_drawdown_pct": -0.23,
+  "nasdaq_20d_pct": 2.24,
+  "nasdaq_52w_high": 27244.28
  }
 ]

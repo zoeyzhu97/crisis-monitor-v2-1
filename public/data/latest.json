@@ -1,17 +1,17 @@
 {
-  "fetched_at": "2026-10-27T17:26:09.893074+00:00",
+  "fetched_at": "2026-10-27T22:58:00.760505+00:00",
   "date": "2026-10-27",
   "values": {
     "credit_spread": 330.0,
-    "vix": 17.71,
-    "us_10y": 4.997,
-    "gbp_cny": 8.8499,
-    "brent": 109.47,
-    "gold": 4073.3999,
-    "dxy": 102.275,
-    "nasdaq": 26470.4453,
-    "hyg": 77.502,
-    "iei": 114.5901,
+    "vix": 17.52,
+    "us_10y": 4.993,
+    "gbp_cny": 8.874,
+    "brent": 109.43,
+    "gold": 4077.0,
+    "dxy": 102.365,
+    "nasdaq": 26477.8105,
+    "hyg": 77.6,
+    "iei": 114.61,
     "uk_10y": 5.3152
   },
   "meta": {
@@ -96,10 +96,10 @@
   "derived": {
     "credit_spread_20d_change": 28.0,
     "credit_spread_20d_min": 302.0,
-    "hy_proxy_20d_pct": -0.78,
-    "hy_proxy_ratio": 0.6763,
-    "nasdaq_drawdown_pct": -4.09,
-    "nasdaq_20d_pct": -1.22,
+    "hy_proxy_20d_pct": -0.67,
+    "hy_proxy_ratio": 0.6771,
+    "nasdaq_drawdown_pct": -4.07,
+    "nasdaq_20d_pct": -1.19,
     "nasdaq_52w_high": 27599.79
   },
   "freshness": {

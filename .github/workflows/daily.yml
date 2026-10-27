@@ -4,10 +4,9 @@ name: daily-update
 
 on:
   schedule:
-    # UTC 12:30 = 伦敦 13:30（夏令时）。FRED 的 HY OAS 在美东上午更新，此时已可拿到前一交易日数据。
-    - cron: "30 12 * * 1-5"
-    # GitHub 的定时任务可能延迟或漏跑；工作日晚些时候再尝试一次。
-    - cron: "30 19 * * 1-5"
+    # Daily retries include weekends for delayed Friday publications.
+    # UTC is fixed; London is UTC+1 during British Summer Time.
+    - cron: "17 7,13,19,23 * * *"
   workflow_dispatch:
   push:
     branches: [main]
@@ -40,6 +39,9 @@ jobs:
       - name: Install python deps
         run: pip install -r requirements.txt
 
+      - name: Test daily data selection
+        run: python -m unittest discover -s tests -p 'test_*.py'
+
       - name: Fetch market data
         env:
           # 可选：在 Settings → Secrets 里添加 ANTHROPIC_API_KEY，抓取失败的字段会自动用 Claude 补齐
@@ -62,6 +64,7 @@ jobs:
       - name: Build site
         run: |
           npm ci
+          node --test tests/freshness.test.mjs
           npm run build
 
       - uses: actions/configure-pages@v5

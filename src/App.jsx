@@ -275,11 +275,10 @@ export default function App() {
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
-    const refresh = () => loadJSON("latest.json").then(data => { setLatest(data); setError(null); })
+    const refresh = () => Promise.all([loadJSON("latest.json"), loadJSON("history.json"), loadJSON("series.json")])
+      .then(([data, hist, chart]) => { setLatest(data); setHistory(hist); setSeries(chart); setError(null); })
       .catch(e => setError(`无法读取 latest.json（${e.message}）。请检查 GitHub Actions 是否已执行。`));
     refresh();
-    loadJSON("history.json").then(setHistory).catch(() => {});
-    loadJSON("series.json").then(setSeries).catch(() => {});
     const timer = setInterval(() => { setNow(new Date()); refresh(); }, 10 * 60 * 1000);
     return () => clearInterval(timer);
   }, []);
@@ -299,7 +298,7 @@ export default function App() {
       <header style={{ textAlign: "center", marginBottom: 20 }}>
         <div style={{ fontSize: 10, color: "#9C948A", letterSpacing: 3, textTransform: "uppercase" }}>Global Financial Crisis Monitor</div>
         <h1 style={{ fontSize: 22, fontWeight: 800, margin: "4px 0" }}>全球金融危机监测仪表盘</h1>
-        <p style={{ fontSize: 12, color: "#9C948A", margin: 0 }}>信用利差驱动 · 三层危机模型 · 每日自动抓取</p>
+        <p style={{ fontSize: 12, color: "#9C948A", margin: 0 }}>信用利差驱动 · 三层危机模型 · 每日 4 次抓取</p>
         {latest && (
           <div style={{ fontSize: 11, color: fetchedAgo > 1 ? "#E65100" : "#9C948A", marginTop: 6 }}>
             数据抓取于 {new Date(latest.fetched_at).toLocaleString("zh-CN")}
@@ -315,7 +314,7 @@ export default function App() {
         <div style={{ ...S.card, marginBottom: 16, padding: "12px 20px", background: excluded.length ? "#FFF3E0" : "#E8F5E9", border: `1px solid ${excluded.length ? "#FFE0B2" : "#C8E6C9"}` }}>
           <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8, fontSize: 12 }}>
             <span style={{ fontWeight: 700, color: excluded.length ? "#E65100" : "#2E7D32" }}>
-              {excluded.length ? `本次评分剔除 ${excluded.length} 项过期指标` : "全部指标均在 3 个交易日内更新，评分可信"}
+              {excluded.length ? `本次评分剔除 ${excluded.length} 项过期指标` : "指标均在各自时效范围内（HY OAS / 英国国债 ≤1 个交易日）"}
             </span>
             <span style={{ color: "#6B635A" }}>
               最旧一项：{INDICATORS.find(i => i.key === fresh.oldest_key)?.name ?? fresh.oldest_key}，数据日期 {fresh.oldest_as_of}（{fresh.oldest_bdays} 个交易日前）
@@ -324,7 +323,7 @@ export default function App() {
           {excluded.length > 0 && (
             <div style={{ fontSize: 11, color: "#6B635A", marginTop: 6, lineHeight: 1.7 }}>
               已剔除：{excluded.map(k => `${INDICATORS.find(i => i.key === k)?.name}（${meta[k].as_of}，${meta[k].stale_bdays} 个交易日）`).join("；")}。
-              过期数据继续参与评分会给出看似完整的错误结论，所以宁可缺项。请检查抓取日志对应数据源。
+              过期数据继续参与评分会给出看似完整的错误结论，所以宁可缺项。系统每日重试；来源未发布新值或抓取失败时，保留真实数据日期。
             </div>
           )}
         </div>

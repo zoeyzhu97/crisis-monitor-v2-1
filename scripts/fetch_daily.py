@@ -20,11 +20,12 @@
   python scripts/fetch_daily.py --dry-run  用内置样例数据跑一遍流程（不联网）
 """
 import io
+import csv
+from concurrent.futures import ThreadPoolExecutor
 import json
 import os
 import re
 import sys
-import urllib.request
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
@@ -159,7 +160,11 @@ def business_days_between(as_of, today, holidays=None):
     return n
 
 
-MAX_STALE_BDAYS = 3   # 超过 3 个交易日未更新的指标不参与评分
+MAX_STALE_BDAYS = 3
+DAILY_KEYS = {"credit_spread", "uk_10y"}
+
+def stale_limit(key):
+    return 1 if key in DAILY_KEYS else MAX_STALE_BDAYS
 
 
 def log(msg):
@@ -183,9 +188,9 @@ def fred_series(series_id, n=400):
     text, errors = None, []
     for url in urls:
         try:
-            req = urllib.request.Request(url, headers=UA)
-            with urllib.request.urlopen(req, timeout=FRED_TIMEOUT) as r:
-                text = r.read().decode("utf-8")
+            response = requests.get(url, timeout=FRED_TIMEOUT, headers=UA)
+            response.raise_for_status()
+            text = response.text
             break
         except Exception as e:
             errors.append(f"{url.split('/')[2]}: {e}")
@@ -204,9 +209,9 @@ def fred_series(series_id, n=400):
 def fred_public_dashboard_oas(n=100):
     """FRED 官方公开 dashboard 的 OAS 表格，用于 graph 端点不可达时。"""
     url = "https://fredaccount.stlouisfed.org/public/dashboard/30917"
-    req = urllib.request.Request(url, headers=UA)
-    with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
-        html = r.read().decode("utf-8")
+    response = requests.get(url, timeout=TIMEOUT, headers=UA)
+    response.raise_for_status()
+    html = response.text
     marker = 'data-series-id="BAMLH0A0HYM2"'
     start = html.find(marker)
     end = html.find("</table>", start)
@@ -248,6 +253,27 @@ def autario_oas(n=400):
     return rows[-n:]
 
 
+def select_oas(candidates):
+    """Merge identical series, prefer official sources on equal dates; never regress."""
+    today = datetime.now(timezone.utc).date().isoformat()
+    merged = {}
+    # Candidates are cache, official, dashboard, mirror. Live data overrides
+    # cache; official observations override mirrors for overlapping dates.
+    ordered = candidates[:1] + list(reversed(candidates[1:]))
+    for source, rows in ordered:
+        for d, v in rows:
+            try:
+                date.fromisoformat(d)
+            except (ValueError, TypeError):
+                continue
+            if d <= today and in_range("credit_spread", v):
+                merged[d] = (v, source)
+    if not merged:
+        return None
+    dates = sorted(merged)
+    return merged[dates[-1]][1], [(d, merged[d][0]) for d in dates][-400:]
+
+
 def cached_oas():
     """官方 FRED/ALFRED 在当前网络不可达时，读取上次成功的官方值。
 
@@ -263,7 +289,7 @@ def cached_oas():
             return None, []
         raw_series = json.loads(series_path.read_text()).get("credit_spread", [])
         series = [(row["d"], float(row["v"])) for row in raw_series]
-        return {"value": value, "source": "FRED BAMLH0A0HYM2", "as_of": meta["as_of"]}, series
+        return {"value": value, "source": meta["source"], "as_of": meta["as_of"]}, series
     except Exception:
         return None, []
 
@@ -295,22 +321,27 @@ def boe_uk_10y():
         "?csv.x=yes&Datefrom=01/Jan/2024&Dateto=now&SeriesCodes=IUDMNPY"
         "&CSVF=TN&UsingCodes=Y&VPD=Y&VFD=N"
     )
-    r = requests.get(url, timeout=TIMEOUT, headers=UA)
+    r = requests.get(url, timeout=TIMEOUT, headers={**UA, "Cache-Control": "no-cache"})
     r.raise_for_status()
-    lines = [l for l in r.text.strip().splitlines() if l and not l.startswith("DATE")]
-    last = None
-    for line in lines:
-        parts = line.split(",")
-        if len(parts) >= 2:
-            try:
-                last = (parts[0].strip(), float(parts[1]))
-            except ValueError:
-                continue
-    if not last:
-        raise RuntimeError("BoE CSV 无有效行")
-    # BoE 日期格式 "29 Aug 2026"
-    d = datetime.strptime(last[0], "%d %b %Y").strftime("%Y-%m-%d")
-    return d, last[1]
+    return parse_boe_csv(r.text)
+
+
+def parse_boe_csv(text):
+    rows = []
+    today = datetime.now(timezone.utc).date().isoformat()
+    for parts in csv.reader(io.StringIO(text)):
+        if len(parts) < 2:
+            continue
+        try:
+            d = datetime.strptime(parts[0].strip(), "%d %b %Y").date().isoformat()
+            v = float(parts[1])
+            if d <= today and in_range("uk_10y", v):
+                rows.append((d, v))
+        except ValueError:
+            continue
+    if not rows:
+        raise RuntimeError("BoE CSV 无有效日度数据")
+    return max(rows, key=lambda row: row[0])
 
 
 # ─────────────────────────────────────────────────────────────
@@ -416,6 +447,10 @@ def fetch_all():
 
     def put(key, value, source, as_of):
         if in_range(key, value):
+            if as_of > datetime.now(timezone.utc).date().isoformat():
+                return
+            if key in fields and fields[key]["as_of"] > as_of:
+                return
             fields[key] = {"value": round(float(value), 4), "source": source, "as_of": as_of}
             log(f"  ✓ {key:14s} {value:>10.4f}  ({source}, {as_of})")
         else:
@@ -424,31 +459,31 @@ def fetch_all():
     # ── FRED ──
     log("FRED …")
     oas_series = []
-    # GitHub hosted runner 长期无法连通 St. Louis Fed 域名，在 Actions 中先读 FRED 镜像。
-    if os.environ.get("GITHUB_ACTIONS") == "true":
+    # Query every equivalent source: a successful but lagging mirror must not
+    # suppress newer official observations. Preserve cached history on outages.
+    cached, cached_series = cached_oas()
+    candidates = [("cache", [])]
+    if cached:
+        candidates[0] = (cached["source"], cached_series or [(cached["as_of"], cached["value"])])
+    sources = [
+        ("FRED BAMLH0A0HYM2", lambda: fred_series("BAMLH0A0HYM2", 400)),
+        ("FRED BAMLH0A0HYM2 (public dashboard)", lambda: fred_public_dashboard_oas(100)),
+        ("Autario mirror / FRED BAMLH0A0HYM2", lambda: autario_oas(400)),
+    ]
+    def read_oas(item):
+        source, loader = item
         try:
-            oas_series = [(d, v * 100) for d, v in autario_oas(400)]
-            put("credit_spread", oas_series[-1][1], "Autario mirror / FRED BAMLH0A0HYM2", oas_series[-1][0])
+            rows = [(d, v * 100) for d, v in loader()]
+            return source, rows
         except Exception as e:
-            log(f"  Autario OAS 镜像失败: {e}")
-    if not oas_series:
-        try:
-            oas_series = [(d, v * 100) for d, v in fred_series("BAMLH0A0HYM2", 400)]  # % → bps
-            put("credit_spread", oas_series[-1][1], "FRED BAMLH0A0HYM2", oas_series[-1][0])
-        except Exception as e:
-            log(f"  FRED OAS 失败: {e}")
-    if not oas_series:
-        try:
-            oas_series = [(d, v * 100) for d, v in fred_public_dashboard_oas(100)]
-            put("credit_spread", oas_series[-1][1], "FRED BAMLH0A0HYM2 (public dashboard)", oas_series[-1][0])
-        except Exception as e:
-            log(f"  FRED public dashboard OAS 备份失败: {e}")
-    if not oas_series and os.environ.get("GITHUB_ACTIONS") != "true":
-        try:
-            oas_series = [(d, v * 100) for d, v in autario_oas(400)]
-            put("credit_spread", oas_series[-1][1], "Autario mirror / FRED BAMLH0A0HYM2", oas_series[-1][0])
-        except Exception as e:
-            log(f"  Autario OAS 镜像失败: {e}")
+            log(f"  {source} 失败: {e}")
+            return source, []
+    with ThreadPoolExecutor(max_workers=3) as pool:
+        candidates.extend(pool.map(read_oas, sources))
+    selected = select_oas(candidates)
+    if selected:
+        source, oas_series = selected
+        put("credit_spread", oas_series[-1][1], source, oas_series[-1][0])
 
     # ── Yahoo ──
     log("Yahoo Finance …")
@@ -473,22 +508,24 @@ def fetch_all():
         except Exception as e:
             log(f"  FRED {sid} 备份失败: {e}")
 
-    # ── Bank of England ──
+    # ── Bank of England daily series; never substitute a monthly yield ──
     log("Bank of England …")
+    try:
+        previous = json.loads((OUT_DIR / "latest.json").read_text())
+        old = previous["meta"]["uk_10y"]
+        if old["source"] == "BoE IUDMNPY":
+            put("uk_10y", previous["values"]["uk_10y"], old["source"], old["as_of"])
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
     try:
         d, v = boe_uk_10y()
         put("uk_10y", v, "BoE IUDMNPY", d)
     except Exception as e:
-        log(f"  BoE 失败: {e}")
-        try:
-            rows = fred_series("IRLTLT01GBM156N", 3)   # 月度，仅作兜底
-            put("uk_10y", rows[-1][1], "FRED IRLTLT01GBM156N (monthly)", rows[-1][0])
-        except Exception as e2:
-            log(f"  FRED 英国10Y 兜底失败: {e2}")
+        log(f"  BoE 日度抓取失败，保留原日期缓存: {e}")
 
     # ── Claude 兜底 ──
     required = ["credit_spread", "vix", "us_10y", "uk_10y", "brent", "gbp_cny", "gold", "dxy", "nasdaq"]
-    missing = [k for k in required if k not in fields]
+    missing = [k for k in required if k not in fields and k not in DAILY_KEYS]
     if missing:
         log(f"缺失字段 {missing}，尝试 Claude 兜底 …")
         for k, rec in claude_fallback(missing).items():
@@ -539,17 +576,22 @@ def main():
             holidays = None
         bd = business_days_between(v["as_of"], today, holidays)
         meta[k] = {"source": v["source"], "as_of": v["as_of"], "stale_bdays": bd,
-                   "stale": bd is not None and bd > MAX_STALE_BDAYS}
+                   "max_stale_bdays_allowed": stale_limit(k),
+                   "stale": bd is None or bd > stale_limit(k)}
     core = ["credit_spread", "vix", "us_10y", "uk_10y", "brent", "gbp_cny", "gold", "dxy"]
     stale_list = [k for k in core if k in meta and meta[k]["stale"]]
     worst = max((k for k in core if k in meta), key=lambda k: meta[k]["stale_bdays"] or 0, default=None)
     freshness = {
         "max_stale_bdays_allowed": MAX_STALE_BDAYS,
+        "daily_max_stale_bdays_allowed": 1,
         "excluded_from_score": stale_list,
         "oldest_key": worst,
         "oldest_bdays": meta[worst]["stale_bdays"] if worst else None,
         "oldest_as_of": meta[worst]["as_of"] if worst else None,
     }
+    for k in DAILY_KEYS:
+        if k not in meta or meta[k]["stale"]:
+            log(f"::warning title=Daily data delayed::{k}: latest observation {meta.get(k, {}).get('as_of', 'missing')}; daily source has not supplied a recent value")
     for k in stale_list:
         log(f"  ⚠ {k} 数据日期 {meta[k]['as_of']}，已 {meta[k]['stale_bdays']} 个交易日未更新，剔除出评分")
 

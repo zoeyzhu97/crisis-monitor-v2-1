@@ -64,7 +64,7 @@ export function liveFreshness(meta, today) {
   const current = Object.fromEntries(Object.entries(meta).map(([key, item]) => {
     const market = key === "uk_10y" ? "uk" : US_KEYS.has(key) ? "us" : "weekday";
     const staleBdays = businessDaysBetween(item?.as_of, today, market);
-    return [key, { ...item, stale_bdays: staleBdays, stale: staleBdays == null || staleBdays > 3 }];
+    return [key, { ...item, stale_bdays: staleBdays, stale: staleBdays == null || staleBdays > (["credit_spread", "uk_10y"].includes(key) ? 1 : 3) }];
   }));
   const oldest = PRIMARY_KEYS.map(key => [key, current[key]]).filter(([, item]) => item?.stale_bdays != null)
     .sort((a, b) => b[1].stale_bdays - a[1].stale_bdays)[0];

@@ -15,9 +15,18 @@ test("US and UK market holidays are not counted as trading days", () => {
 test("an old JSON snapshot becomes stale without a new fetch", () => {
   const snapshot = { credit_spread: { as_of: "2026-09-23", stale: false, stale_bdays: 2 } };
   const monday = liveFreshness(snapshot, "2026-09-28");
-  assert.equal(monday.meta.credit_spread.stale, false);
+  assert.equal(monday.meta.credit_spread.stale, true);
   assert.equal(monday.meta.credit_spread.stale_bdays, 3);
   const tuesday = liveFreshness(snapshot, "2026-09-29");
   assert.equal(tuesday.meta.credit_spread.stale, true);
   assert.equal(tuesday.meta.credit_spread.stale_bdays, 4);
 });
+
+ test("daily indicators expire after one trading day; other thresholds stay unchanged", () => {
+   const snapshot = Object.fromEntries(["credit_spread", "uk_10y", "vix"].map(k => [k, {as_of: "2026-10-23"}]));
+   assert.equal(liveFreshness(snapshot, "2026-10-26").meta.uk_10y.stale, false);
+   const result = liveFreshness(snapshot, "2026-10-27").meta;
+   assert.equal(result.credit_spread.stale, true);
+   assert.equal(result.uk_10y.stale, true);
+   assert.equal(result.vix.stale, false);
+ });

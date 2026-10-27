@@ -34,4 +34,6 @@ python3 scripts/fetch_daily.py
 
 ## 部署
 
-按 README「方案 A」六步设置 GitHub Actions + Pages，之后每个工作日 UTC 12:30 自动更新，无需人工干预。
+按 README「方案 A」六步设置 GitHub Actions + Pages，之后每天 UTC 07:17、13:17、19:17、23:17 自动更新，无需人工干预。
+
+2026-10-27 修正：HY OAS 与英国 10Y 采用 1 个交易日时效门槛；英国 10Y 不再使用月度兜底。以 README 最新说明为准。

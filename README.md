@@ -32,7 +32,7 @@ src/App.jsx                  前端
 3. 仓库 Settings → Actions → General → Workflow permissions 选 **Read and write permissions**。
 4. （可选）Settings → Secrets and variables → Actions → New repository secret，名称 `ANTHROPIC_API_KEY`。不填也能跑，只是抓取失败的字段不会用 Claude 补齐。
 5. Actions 页面 → `daily-update` → **Run workflow** 手动跑一次，确认绿色通过。
-6. 之后每个工作日 UTC 12:30 自动执行。访问地址在 Actions 日志的 deploy 步骤里，或 Settings → Pages 顶部。
+6. 之后每天 UTC 07:17、13:17、19:17、23:17 自动执行。访问地址在 Actions 日志的 deploy 步骤里，或 Settings → Pages 顶部。
 
 注意：GitHub 的定时任务在仓库 60 天无 commit 时会自动暂停，但本任务每天自己 commit 数据，所以不会触发这个规则。
 
@@ -89,3 +89,12 @@ Codex 需要重点验证的三处（本地 sandbox 无法访问外网，未实�
 - FRED 的 OAS 通常有一个交易日延迟，HYG/IEI 代理可提前一天看到方向
 - 新鲜度按对应市场的交易日计算，不把美国休市日（如 Labor Day）误计为过期天数
 - 数据源可能改版，脚本每行都打印来源，出问题时看日志即可定位
+
+
+### 2026-10-27 每日时效修正
+
+- GitHub Actions 每天 UTC 07:17、13:17、19:17、23:17 抓取并发布（含周末，实际启动可能受队列延迟影响）。
+- HY OAS 同时检查官方 CSV、官方 dashboard 和同序列镜像，采用最新有效日期；保留历史并避免缓存日期倒退。
+- 英国 10Y 使用 BoE IUDMNPY 日度序列，按日期选择最新有效记录；失败保留原日期缓存，不用月度值或 AI 估值替代。
+- HY OAS 和英国 10Y 超过 1 个交易日即标记过期、剔除评分并在 Actions 发出警告。其他指标保留 3 个交易日门槛。
+- 每日抓取不等于来源每日已发布；尚未公布的数据不会伪造为当天值。页面每 10 分钟同步刷新数值、历史和图表。

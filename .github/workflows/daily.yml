@@ -66,7 +66,7 @@ jobs:
       - name: Build site
         run: |
           npm ci
-          node --test tests/freshness.test.mjs
+          node --test tests/*.test.mjs
           npm run build
 
       - uses: actions/configure-pages@v5

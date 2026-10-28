@@ -22,11 +22,11 @@ test("an old JSON snapshot becomes stale without a new fetch", () => {
   assert.equal(tuesday.meta.credit_spread.stale_bdays, 4);
 });
 
- test("daily indicators expire after one trading day; other thresholds stay unchanged", () => {
+ test("daily indicators allow two publication business days; other thresholds stay unchanged", () => {
    const snapshot = Object.fromEntries(["credit_spread", "uk_10y", "vix"].map(k => [k, {as_of: "2026-10-23"}]));
    assert.equal(liveFreshness(snapshot, "2026-10-26").meta.uk_10y.stale, false);
    const result = liveFreshness(snapshot, "2026-10-27").meta;
-   assert.equal(result.credit_spread.stale, true);
-   assert.equal(result.uk_10y.stale, true);
+   assert.equal(result.credit_spread.stale, false);
+   assert.equal(result.uk_10y.stale, false);
    assert.equal(result.vix.stale, false);
  });

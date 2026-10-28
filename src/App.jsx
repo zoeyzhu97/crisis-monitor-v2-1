@@ -58,24 +58,13 @@ function spreadScore(level, chg20, hyProxy20) {
   return valid.length ? Math.max(...valid) : null;
 }
 
-const MAX_STALE_BDAYS = 3;
-function isStale(meta, key) { return !!meta?.[key]?.stale; }
-
 function computeAll(values, derived, meta) {
   if (!values) return { scores: INDICATORS.map(() => null), overall: null, avg: null, floored: false, excluded: [] };
   const excluded = [];
   const sc = INDICATORS.map(i => {
     if (i.key === "credit_spread") {
-      const oasStale = isStale(meta, "credit_spread");
-      const proxyStale = isStale(meta, "hyg") || isStale(meta, "iei");
-      if (oasStale) excluded.push(i.key);
-      return spreadScore(
-        oasStale ? null : values.credit_spread,
-        oasStale ? null : derived?.credit_spread_20d_change,
-        proxyStale ? null : derived?.hy_proxy_20d_pct,
-      );
+      return spreadScore(values.credit_spread, derived?.credit_spread_20d_change, derived?.hy_proxy_20d_pct);
     }
-    if (isStale(meta, i.key)) { excluded.push(i.key); return null; }
     return scoreOne(values[i.key], i.thresholds, i.inverted);
   });
   let tw = 0, ts = 0;
@@ -96,9 +85,9 @@ function rl(s) { return s == null ? "等待数据" : s <= 2.5 ? "低风险" : s 
 // ═══════════════════════════════════════════════════════════
 function assessCrisisLayers(values, derived, meta) {
   if (!values) return null;
-  const brent = isStale(meta, "brent") ? null : values.brent;
-  const uk10y = isStale(meta, "uk_10y") ? null : values.uk_10y;
-  const dd = isStale(meta, "nasdaq") ? null : derived?.nasdaq_drawdown_pct;
+  const brent = values.brent;
+  const uk10y = values.uk_10y;
+  const dd = derived?.nasdaq_drawdown_pct;
   const valStatus = dd == null ? "monitor" : dd < -30 ? "critical" : dd < -20 ? "high" : dd < -10 ? "elevated" : "normal";
   const layers = [
     {
@@ -239,7 +228,7 @@ function IndicatorCard({ ind, value, score, meta, derived }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
         <span style={{ fontSize: 12, color: "#6B635A" }}>{ind.desc}</span>
         {isStaleCard
-          ? <span style={{ fontSize: 10, fontWeight: 600, color: "#6B635A", background: "#EDE9E1", padding: "3px 10px", borderRadius: 20 }}>{ind.isPrimary && score != null ? "OAS 已过期，改用代理计分" : "数据过期，未计分"}</span>
+          ? <span style={{ fontSize: 10, fontWeight: 600, color: "#6B635A", background: "#EDE9E1", padding: "3px 10px", borderRadius: 20 }}>{"更新延迟 · 最近有效值计分"}</span>
           : <span style={{ fontSize: 10, fontWeight: 600, color: rc(score), background: rbg(score), padding: "3px 10px", borderRadius: 20 }}>{rl(score)}</span>}
       </div>
       <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
@@ -286,9 +275,9 @@ export default function App() {
   const values = latest?.values, derived = latest?.derived;
   const today = now.toISOString().slice(0, 10);
   const { meta, freshness: fresh } = liveFreshness(latest?.meta, today);
-  const { scores, overall, avg, floored, excluded } = computeAll(values, derived, meta);
-  const oasStale = isStale(meta, "credit_spread");
-  const advice = nasdaqAdvice(overall, oasStale ? null : values?.credit_spread, oasStale ? null : derived?.credit_spread_20d_change);
+  const { scores, overall, avg, floored } = computeAll(values, derived, meta);
+  const excluded = INDICATORS.filter(i => meta?.[i.key]?.stale).map(i => i.key);
+  const advice = nasdaqAdvice(overall, values?.credit_spread, derived?.credit_spread_20d_change);
   const crisis = assessCrisisLayers(values, derived, meta);
   const fetchedAgo = latest ? businessDaysBetween(latest.date, today) : null;
   const histScored = history.map(h => ({ date: h.date, score: computeAll(h, h, null).overall })).filter(h => h.score != null);
@@ -298,7 +287,7 @@ export default function App() {
       <header style={{ textAlign: "center", marginBottom: 20 }}>
         <div style={{ fontSize: 10, color: "#9C948A", letterSpacing: 3, textTransform: "uppercase" }}>Global Financial Crisis Monitor</div>
         <h1 style={{ fontSize: 22, fontWeight: 800, margin: "4px 0" }}>全球金融危机监测仪表盘</h1>
-        <p style={{ fontSize: 12, color: "#9C948A", margin: 0 }}>信用利差驱动 · 三层危机模型 · 每日 4 次抓取</p>
+        <p style={{ fontSize: 12, color: "#9C948A", margin: 0 }}>信用利差驱动 · 三层危机模型 · 每小时自动更新</p>
         {latest && (
           <div style={{ fontSize: 11, color: fetchedAgo > 1 ? "#E65100" : "#9C948A", marginTop: 6 }}>
             数据抓取于 {new Date(latest.fetched_at).toLocaleString("zh-CN")}
@@ -314,7 +303,7 @@ export default function App() {
         <div style={{ ...S.card, marginBottom: 16, padding: "12px 20px", background: excluded.length ? "#FFF3E0" : "#E8F5E9", border: `1px solid ${excluded.length ? "#FFE0B2" : "#C8E6C9"}` }}>
           <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8, fontSize: 12 }}>
             <span style={{ fontWeight: 700, color: excluded.length ? "#E65100" : "#2E7D32" }}>
-              {excluded.length ? `本次评分剔除 ${excluded.length} 项过期指标` : "指标均在各自时效范围内（HY OAS / 英国国债 ≤1 个交易日）"}
+              {excluded.length ? `${excluded.length} 项数据延迟，保留最近公布值` : "每日检查已完成 · 按各来源最近公布值评分"}
             </span>
             <span style={{ color: "#6B635A" }}>
               最旧一项：{INDICATORS.find(i => i.key === fresh.oldest_key)?.name ?? fresh.oldest_key}，数据日期 {fresh.oldest_as_of}（{fresh.oldest_bdays} 个交易日前）
@@ -322,8 +311,8 @@ export default function App() {
           </div>
           {excluded.length > 0 && (
             <div style={{ fontSize: 11, color: "#6B635A", marginTop: 6, lineHeight: 1.7 }}>
-              已剔除：{excluded.map(k => `${INDICATORS.find(i => i.key === k)?.name}（${meta[k].as_of}，${meta[k].stale_bdays} 个交易日）`).join("；")}。
-              过期数据继续参与评分会给出看似完整的错误结论，所以宁可缺项。系统每日重试；来源未发布新值或抓取失败时，保留真实数据日期。
+              待更新：{excluded.map(k => `${INDICATORS.find(i => i.key === k)?.name}（${meta[k].as_of}，${meta[k].stale_bdays} 个交易日）`).join("；")}。
+              以上指标继续按最近有效值及原权重计分；当前评分含延迟数据。系统每小时重新取数，获取新值后自动替换，不将抓取时间冒充数据日期。
             </div>
           )}
         </div>
@@ -332,7 +321,7 @@ export default function App() {
       {/* 综合评分 */}
       <div style={{ ...S.card, textAlign: "center", marginBottom: 16 }}>
         <Gauge score={overall} />
-        <div style={{ fontSize: 11, color: "#9C948A", marginTop: 4 }}>综合评分 · 0 安全 → 10 极度危险</div>
+        <div style={{ fontSize: 11, color: "#9C948A", marginTop: 4 }}>综合评分 · 0 安全 → 10 极度危险{excluded.length > 0 ? " · 含延迟数据" : ""}</div>
         {floored && <div style={{ fontSize: 11, color: "#C62828", marginTop: 4 }}>加权均值为 {avg.toFixed(1)}，但信用利差单项已进入高风险区，总分按核心信号上调。</div>}
       </div>
 

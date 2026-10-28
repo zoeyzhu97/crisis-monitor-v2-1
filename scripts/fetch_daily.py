@@ -164,7 +164,7 @@ MAX_STALE_BDAYS = 3
 DAILY_KEYS = {"credit_spread", "uk_10y"}
 
 def stale_limit(key):
-    return 1 if key in DAILY_KEYS else MAX_STALE_BDAYS
+    return 2 if key in DAILY_KEYS else MAX_STALE_BDAYS
 
 
 def log(msg):
@@ -443,7 +443,13 @@ def compute_derived(fields, oas_series, hyg_s, iei_s, ndx_s):
 # 主流程
 # ─────────────────────────────────────────────────────────────
 def fetch_all():
-    fields = {}   # key -> {"value", "source", "as_of"}
+    fields = {}
+    # Keep all verified observations across outages, never silently drop inputs.
+    try:
+        previous = json.loads((OUT_DIR / "latest.json").read_text())
+    except (OSError, ValueError):
+        previous = {}
+
 
     def put(key, value, source, as_of):
         if in_range(key, value):
@@ -455,6 +461,11 @@ def fetch_all():
             log(f"  ✓ {key:14s} {value:>10.4f}  ({source}, {as_of})")
         else:
             log(f"  ✗ {key} 值 {value} 超出合理范围，丢弃 ({source})")
+
+    for key, value in previous.get("values", {}).items():
+        info = previous.get("meta", {}).get(key, {})
+        if info.get("source") not in (None, "sample", "claude+web_search") and info.get("as_of"):
+            put(key, value, info["source"], info["as_of"])
 
     # ── FRED ──
     log("FRED …")
@@ -500,7 +511,7 @@ def fetch_all():
 
     # Yahoo 缺失时才请求 FRED 备份，避免每日无意义地等待备用端点。
     for key, sid in [("vix", "VIXCLS"), ("us_10y", "DGS10"), ("brent", "DCOILBRENTEU")]:
-        if key in fields:
+        if key in yseries:
             continue
         try:
             rows = fred_series(sid, 5)
@@ -523,15 +534,8 @@ def fetch_all():
     except Exception as e:
         log(f"  BoE 日度抓取失败，保留原日期缓存: {e}")
 
-    # ── Claude 兜底 ──
+    # ── Required inputs: never manufacture missing observations ──
     required = ["credit_spread", "vix", "us_10y", "uk_10y", "brent", "gbp_cny", "gold", "dxy", "nasdaq"]
-    missing = [k for k in required if k not in fields and k not in DAILY_KEYS]
-    if missing:
-        log(f"缺失字段 {missing}，尝试 Claude 兜底 …")
-        for k, rec in claude_fallback(missing).items():
-            fields[k] = rec
-            log(f"  ✓ {k} = {rec['value']} (claude)")
-
     # GitHub hosted runner 可能无法连通 St. Louis Fed；只对核心 OAS 使用上次官方抓取缓存。
     if "credit_spread" not in fields:
         cached, cached_series = cached_oas()
@@ -577,14 +581,16 @@ def main():
         bd = business_days_between(v["as_of"], today, holidays)
         meta[k] = {"source": v["source"], "as_of": v["as_of"], "stale_bdays": bd,
                    "max_stale_bdays_allowed": stale_limit(k),
-                   "stale": bd is None or bd > stale_limit(k)}
+                   "stale": bd is None or bd > stale_limit(k),
+                   "checked_at": now.isoformat()}
     core = ["credit_spread", "vix", "us_10y", "uk_10y", "brent", "gbp_cny", "gold", "dxy"]
     stale_list = [k for k in core if k in meta and meta[k]["stale"]]
     worst = max((k for k in core if k in meta), key=lambda k: meta[k]["stale_bdays"] or 0, default=None)
     freshness = {
         "max_stale_bdays_allowed": MAX_STALE_BDAYS,
-        "daily_max_stale_bdays_allowed": 1,
-        "excluded_from_score": stale_list,
+        "daily_max_stale_bdays_allowed": 2,
+        "excluded_from_score": [],
+        "delayed_indicators": stale_list,
         "oldest_key": worst,
         "oldest_bdays": meta[worst]["stale_bdays"] if worst else None,
         "oldest_as_of": meta[worst]["as_of"] if worst else None,
@@ -593,7 +599,7 @@ def main():
         if k not in meta or meta[k]["stale"]:
             log(f"::warning title=Daily data delayed::{k}: latest observation {meta.get(k, {}).get('as_of', 'missing')}; daily source has not supplied a recent value")
     for k in stale_list:
-        log(f"  ⚠ {k} 数据日期 {meta[k]['as_of']}，已 {meta[k]['stale_bdays']} 个交易日未更新，剔除出评分")
+        log(f"  ⚠ {k} 数据日期 {meta[k]['as_of']}，已 {meta[k]['stale_bdays']} 个交易日未更新，保留最近有效值参与评分并标记延迟")
 
     latest = {
         "fetched_at": now.isoformat(),

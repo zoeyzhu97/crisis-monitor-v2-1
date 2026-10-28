@@ -6,7 +6,7 @@ on:
   schedule:
     # Daily retries include weekends for delayed Friday publications.
     # UTC is fixed; London is UTC+1 during British Summer Time.
-    - cron: "17 7,13,19,23 * * *"
+    - cron: "17 * * * *"
   workflow_dispatch:
   push:
     branches: [main]
@@ -24,7 +24,8 @@ concurrency:
 
 jobs:
   update-and-deploy:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
+    timeout-minutes: 15
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -43,9 +44,6 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_*.py'
 
       - name: Fetch market data
-        env:
-          # 可选：在 Settings → Secrets 里添加 ANTHROPIC_API_KEY，抓取失败的字段会自动用 Claude 补齐
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: python scripts/fetch_daily.py
 
       - name: Commit data

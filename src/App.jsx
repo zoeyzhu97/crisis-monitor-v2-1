@@ -345,11 +345,11 @@ export default function App() {
         </div>
         <Sparkline points={series?.credit_spread} color={rc(scores[0])} />
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 8, margin: "12px 0" }}>
-          <Stat label="OAS 水平" v={!oasStale && values?.credit_spread != null ? `${Math.round(values.credit_spread)} bps` : "—"} />
-          <Stat label="20 日变化" v={!oasStale && derived?.credit_spread_20d_change != null ? `${derived.credit_spread_20d_change >= 0 ? "+" : ""}${Math.round(derived.credit_spread_20d_change)} bps` : "—"}
-            warn={!oasStale && derived?.credit_spread_20d_change >= SPEED_THRESHOLDS[0]} />
-          <Stat label="HYG/IEI 比值 20 日" v={!isStale(meta, "hyg") && !isStale(meta, "iei") && derived?.hy_proxy_20d_pct != null ? `${derived.hy_proxy_20d_pct >= 0 ? "+" : ""}${derived.hy_proxy_20d_pct.toFixed(2)}%` : "—"}
-            warn={!isStale(meta, "hyg") && !isStale(meta, "iei") && derived?.hy_proxy_20d_pct != null && derived.hy_proxy_20d_pct < -2}
+          <Stat label="OAS 水平" v={values?.credit_spread != null ? `${Math.round(values.credit_spread)} bps` : "—"} />
+          <Stat label="20 日变化" v={derived?.credit_spread_20d_change != null ? `${derived.credit_spread_20d_change >= 0 ? "+" : ""}${Math.round(derived.credit_spread_20d_change)} bps` : "—"}
+            warn={derived?.credit_spread_20d_change >= SPEED_THRESHOLDS[0]} />
+          <Stat label="HYG/IEI 比值 20 日" v={derived?.hy_proxy_20d_pct != null ? `${derived.hy_proxy_20d_pct >= 0 ? "+" : ""}${derived.hy_proxy_20d_pct.toFixed(2)}%` : "—"}
+            warn={derived?.hy_proxy_20d_pct != null && derived.hy_proxy_20d_pct < -2}
             hint="实时代理，久期匹配。跌超2%通常对应利差扩大约100 bps，可比 FRED 早一天看到。" />
         </div>
         {[

@@ -1,5 +1,8 @@
 import importlib.util
 import unittest
+import json
+import tempfile
+from unittest.mock import patch
 from pathlib import Path
 
 spec = importlib.util.spec_from_file_location("daily", Path(__file__).parents[1] / "scripts/fetch_daily.py")
@@ -7,6 +10,20 @@ daily = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(daily)
 
 class DailyTests(unittest.TestCase):
+    def test_outage_preserves_every_verified_value_and_date(self):
+        with tempfile.TemporaryDirectory() as folder:
+            out = Path(folder)
+            values = {"credit_spread": 330, "uk_10y": 5.3, "vix": 20}
+            meta = {k: {"source": "BoE IUDMNPY" if k == "uk_10y" else "FRED BAMLH0A0HYM2" if k == "credit_spread" else "Yahoo ^VIX", "as_of": "2026-10-26"} for k in values}
+            (out / "latest.json").write_text(json.dumps({"values": values, "meta": meta}))
+            (out / "series.json").write_text(json.dumps({"credit_spread": [{"d": "2026-10-26", "v": 330}]}))
+            with patch.object(daily, "OUT_DIR", out), patch.object(daily, "fred_series", side_effect=RuntimeError("offline")), patch.object(daily, "fred_public_dashboard_oas", side_effect=RuntimeError("offline")), patch.object(daily, "autario_oas", side_effect=RuntimeError("offline")), patch.object(daily, "boe_uk_10y", side_effect=RuntimeError("offline")), patch.object(daily, "yahoo_history", return_value=None):
+                fields, _, _ = daily.fetch_all()
+            for key, value in values.items():
+                self.assertEqual(fields[key]["value"], value)
+                self.assertEqual(fields[key]["as_of"], "2026-10-26")
+                self.assertEqual(fields[key]["fetch_status"], "fetch_failed_cached")
+
     def test_newest_source_wins_and_official_revises_overlap(self):
         selected = daily.select_oas([
             ("cache", [("2026-10-21", 320)]),

@@ -224,7 +224,7 @@ function IndicatorCard({ ind, value, score, meta, derived }) {
   const isStaleCard = !!meta?.stale;
   const chg = ind.isPrimary ? derived?.credit_spread_20d_change : null;
   return (
-    <div style={{ ...S.card, borderLeft: !isStaleCard && score > 5 ? `3px solid ${rc(score)}` : undefined, cursor: "pointer", opacity: isStaleCard ? 0.55 : 1, background: isStaleCard ? "#FAFAF8" : "#fff" }} onClick={() => setOpen(!open)}>
+    <div style={{ ...S.card, borderLeft: score > 5 ? `3px solid ${rc(score)}` : undefined, cursor: "pointer", opacity: 1, background: isStaleCard ? "#FAFAF8" : "#fff" }} onClick={() => setOpen(!open)}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
         <span style={{ fontSize: 12, color: "#6B635A" }}>{ind.desc}</span>
         {isStaleCard
@@ -246,7 +246,7 @@ function IndicatorCard({ ind, value, score, meta, derived }) {
         <div style={{ height: "100%", borderRadius: 2, background: rc(score), width: `${((score ?? 0) / 10) * 100}%`, transition: "width 0.6s" }} />
       </div>
       <div style={{ fontSize: 10, color: isStaleCard ? "#E65100" : "#9C948A", marginTop: 6 }}>
-        {meta ? `${meta.source} · 数据日期 ${meta.as_of}${staleB > 0 ? ` · ${staleB} 个交易日前` : ""}` : "无来源信息"}
+        {meta ? `${meta.source} · 数据日期 ${meta.as_of}${meta.fetch_status === "fetch_failed_cached" ? " · 本轮连接失败，自动重试中" : ""}${staleB > 0 ? ` · ${staleB} 个交易日前` : ""}` : "无来源信息"}
       </div>
       {open && <div style={{ marginTop: 10, fontSize: 11, color: "#9C948A", lineHeight: 1.7, borderTop: "1px solid #EDE9E1", paddingTop: 8 }}>{ind.note}</div>}
     </div>
@@ -303,7 +303,7 @@ export default function App() {
         <div style={{ ...S.card, marginBottom: 16, padding: "12px 20px", background: excluded.length ? "#FFF3E0" : "#E8F5E9", border: `1px solid ${excluded.length ? "#FFE0B2" : "#C8E6C9"}` }}>
           <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8, fontSize: 12 }}>
             <span style={{ fontWeight: 700, color: excluded.length ? "#E65100" : "#2E7D32" }}>
-              {excluded.length ? `${excluded.length} 项数据延迟，保留最近公布值` : "每日检查已完成 · 按各来源最近公布值评分"}
+              {excluded.length ? `${excluded.length} 项数据延迟，保留最近公布值` : "按各来源最近公布值评分 · 保留真实观察日期"}
             </span>
             <span style={{ color: "#6B635A" }}>
               最旧一项：{INDICATORS.find(i => i.key === fresh.oldest_key)?.name ?? fresh.oldest_key}，数据日期 {fresh.oldest_as_of}（{fresh.oldest_bdays} 个交易日前）

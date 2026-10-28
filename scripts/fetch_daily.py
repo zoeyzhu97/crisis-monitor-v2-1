@@ -8,7 +8,7 @@
   Yahoo Finance (yfinance)         VIX、美国10Y、英镑/人民币、布伦特、黄金、DXY、纳斯达克、HYG、IEI
   Bank of England IADB (CSV)       英国10年期国债票面收益率
 
-可选：设置 ANTHROPIC_API_KEY 后，任何抓取失败的字段会用 Claude + web_search 补齐。
+所有数值来自可核验的数据端点；失败保留原始观察日期，不使用 AI 估值。
 
 输出（写入 public/data/，前端直接读取，不再需要浏览器里放任何密钥）：
   latest.json    今日所有指标 + 来源 + 数据日期 + 派生信号
@@ -23,13 +23,14 @@ import io
 import csv
 from concurrent.futures import ThreadPoolExecutor
 import json
-import os
 import re
 import sys
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT_DIR = ROOT / "public" / "data"
@@ -176,6 +177,15 @@ def in_range(key, v):
     return v is not None and lo <= v <= hi
 
 
+def get_with_retry(url, **kwargs):
+    # Retry transient network / rate-limit errors; each source has a bounded timeout.
+    with requests.Session() as session:
+        retry = Retry(total=2, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504],
+                      allowed_methods=["GET"], respect_retry_after_header=False)
+        session.mount("https://", HTTPAdapter(max_retries=retry))
+        return session.get(url, **kwargs)
+
+
 # ─────────────────────────────────────────────────────────────
 # FRED 公开 CSV 端点（无需密钥）
 # ─────────────────────────────────────────────────────────────
@@ -188,7 +198,7 @@ def fred_series(series_id, n=400):
     text, errors = None, []
     for url in urls:
         try:
-            response = requests.get(url, timeout=FRED_TIMEOUT, headers=UA)
+            response = get_with_retry(url, timeout=FRED_TIMEOUT, headers=UA)
             response.raise_for_status()
             text = response.text
             break
@@ -209,7 +219,7 @@ def fred_series(series_id, n=400):
 def fred_public_dashboard_oas(n=100):
     """FRED 官方公开 dashboard 的 OAS 表格，用于 graph 端点不可达时。"""
     url = "https://fredaccount.stlouisfed.org/public/dashboard/30917"
-    response = requests.get(url, timeout=TIMEOUT, headers=UA)
+    response = get_with_retry(url, timeout=TIMEOUT, headers=UA)
     response.raise_for_status()
     html = response.text
     marker = 'data-series-id="BAMLH0A0HYM2"'
@@ -235,7 +245,7 @@ def autario_oas(n=400):
         f"https://autario.com/api/v1/public/datasets/{dataset_id}/data"
         f"?limit={limit}&non_null_only=true"
     )
-    response = requests.get(url, timeout=TIMEOUT, headers=UA)
+    response = get_with_retry(url, timeout=TIMEOUT, headers=UA)
     response.raise_for_status()
     payload = response.json()
     rows = []
@@ -277,7 +287,7 @@ def select_oas(candidates):
 def cached_oas():
     """官方 FRED/ALFRED 在当前网络不可达时，读取上次成功的官方值。
 
-    保留原 as_of，后续仍由统一新鲜度规则判断是否剔除，不会把缓存冒充成当日数据。
+    保留原 as_of，后续仍由统一新鲜度规则标记延迟，不会把缓存冒充成当日数据。
     """
     latest_path = OUT_DIR / "latest.json"
     series_path = OUT_DIR / "series.json"
@@ -321,7 +331,7 @@ def boe_uk_10y():
         "?csv.x=yes&Datefrom=01/Jan/2024&Dateto=now&SeriesCodes=IUDMNPY"
         "&CSVF=TN&UsingCodes=Y&VPD=Y&VFD=N"
     )
-    r = requests.get(url, timeout=TIMEOUT, headers={**UA, "Cache-Control": "no-cache"})
+    r = get_with_retry(url, timeout=TIMEOUT, headers={**UA, "Cache-Control": "no-cache"})
     r.raise_for_status()
     return parse_boe_csv(r.text)
 
@@ -342,63 +352,6 @@ def parse_boe_csv(text):
     if not rows:
         raise RuntimeError("BoE CSV 无有效日度数据")
     return max(rows, key=lambda row: row[0])
-
-
-# ─────────────────────────────────────────────────────────────
-# Claude 兜底（仅用于抓取失败的字段）
-# ─────────────────────────────────────────────────────────────
-def claude_fallback(missing_keys):
-    key = os.environ.get("ANTHROPIC_API_KEY")
-    if not key or not missing_keys:
-        return {}
-    desc = {
-        "credit_spread": "ICE BofA US High Yield Index Option-Adjusted Spread in basis points",
-        "vix": "CBOE VIX index level",
-        "us_10y": "US 10-year Treasury yield in percent",
-        "uk_10y": "UK 10-year gilt yield in percent",
-        "brent": "Brent crude price in USD per barrel",
-        "gbp_cny": "GBP/CNY exchange rate",
-        "gold": "Gold spot price in USD per troy ounce",
-        "dxy": "US Dollar Index DXY level",
-        "nasdaq": "NASDAQ Composite index level",
-    }
-    wanted = {k: desc[k] for k in missing_keys if k in desc}
-    prompt = (
-        "Search the web for the most recent closing values of these items. "
-        "Return ONLY a JSON object with these exact keys and numeric values, plus a key "
-        "'as_of' with the date (YYYY-MM-DD) the values refer to. No markdown.\n"
-        + json.dumps(wanted, indent=2)
-    )
-    try:
-        r = requests.post(
-            "https://api.anthropic.com/v1/messages",
-            headers={"x-api-key": key, "anthropic-version": "2023-06-01",
-                     "content-type": "application/json"},
-            json={
-                "model": "claude-sonnet-4-6",
-                "max_tokens": 800,
-                "tools": [{"type": "web_search_20250305", "name": "web_search"}],
-                "messages": [{"role": "user", "content": prompt}],
-            },
-            timeout=120,
-        )
-        r.raise_for_status()
-        txt = "\n".join(b.get("text", "") for b in r.json()["content"] if b.get("type") == "text")
-        import re
-        m = re.search(r"\{[\s\S]*\}", txt)
-        if not m:
-            return {}
-        p = json.loads(m.group(0).replace("```json", "").replace("```", ""))
-        as_of = p.get("as_of") or datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        out = {}
-        for k in wanted:
-            v = p.get(k)
-            if isinstance(v, (int, float)) and in_range(k, float(v)):
-                out[k] = {"value": float(v), "source": "claude+web_search", "as_of": as_of}
-        return out
-    except Exception as e:
-        log(f"  Claude 兜底失败: {e}")
-        return {}
 
 
 # ─────────────────────────────────────────────────────────────
@@ -444,6 +397,7 @@ def compute_derived(fields, oas_series, hyg_s, iei_s, ndx_s):
 # ─────────────────────────────────────────────────────────────
 def fetch_all():
     fields = {}
+    checked = set()
     # Keep all verified observations across outages, never silently drop inputs.
     try:
         previous = json.loads((OUT_DIR / "latest.json").read_text())
@@ -451,10 +405,12 @@ def fetch_all():
         previous = {}
 
 
-    def put(key, value, source, as_of):
+    def put(key, value, source, as_of, cached=False):
         if in_range(key, value):
             if as_of > datetime.now(timezone.utc).date().isoformat():
                 return
+            if not cached:
+                checked.add(key)
             if key in fields and fields[key]["as_of"] > as_of:
                 return
             fields[key] = {"value": round(float(value), 4), "source": source, "as_of": as_of}
@@ -465,7 +421,7 @@ def fetch_all():
     for key, value in previous.get("values", {}).items():
         info = previous.get("meta", {}).get(key, {})
         if info.get("source") not in (None, "sample", "claude+web_search") and info.get("as_of"):
-            put(key, value, info["source"], info["as_of"])
+            put(key, value, info["source"], info["as_of"], cached=True)
 
     # ── FRED ──
     log("FRED …")
@@ -494,7 +450,7 @@ def fetch_all():
     selected = select_oas(candidates)
     if selected:
         source, oas_series = selected
-        put("credit_spread", oas_series[-1][1], source, oas_series[-1][0])
+        put("credit_spread", oas_series[-1][1], source, oas_series[-1][0], cached=not any(rows for _, rows in candidates[1:]))
 
     # ── Yahoo ──
     log("Yahoo Finance …")
@@ -525,7 +481,7 @@ def fetch_all():
         previous = json.loads((OUT_DIR / "latest.json").read_text())
         old = previous["meta"]["uk_10y"]
         if old["source"] == "BoE IUDMNPY":
-            put("uk_10y", previous["values"]["uk_10y"], old["source"], old["as_of"])
+            put("uk_10y", previous["values"]["uk_10y"], old["source"], old["as_of"], cached=True)
     except (OSError, ValueError, KeyError, TypeError):
         pass
     try:
@@ -545,6 +501,8 @@ def fetch_all():
             log(f"  ✓ credit_spread {cached['value']:>10.4f}  (FRED 上次成功抓取, {cached['as_of']})")
 
     derived = compute_derived(fields, oas_series, yseries.get("hyg"), yseries.get("iei"), yseries.get("nasdaq"))
+    for key, field in fields.items():
+        field["fetch_status"] = "checked" if key in checked else "fetch_failed_cached"
     return fields, derived, oas_series
 
 
@@ -582,7 +540,8 @@ def main():
         meta[k] = {"source": v["source"], "as_of": v["as_of"], "stale_bdays": bd,
                    "max_stale_bdays_allowed": stale_limit(k),
                    "stale": bd is None or bd > stale_limit(k),
-                   "checked_at": now.isoformat()}
+                   "checked_at": now.isoformat(),
+                   "fetch_status": v.get("fetch_status", "sample")}
     core = ["credit_spread", "vix", "us_10y", "uk_10y", "brent", "gbp_cny", "gold", "dxy"]
     stale_list = [k for k in core if k in meta and meta[k]["stale"]]
     worst = max((k for k in core if k in meta), key=lambda k: meta[k]["stale_bdays"] or 0, default=None)

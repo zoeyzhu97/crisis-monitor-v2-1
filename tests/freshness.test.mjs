@@ -30,3 +30,17 @@ test("an old JSON snapshot becomes stale without a new fetch", () => {
    assert.equal(result.uk_10y.stale, false);
    assert.equal(result.vix.stale, false);
  });
+
+// Exercise the actual app scoring functions, without needing a browser/React DOM.
+import { readFileSync } from 'node:fs';
+const appSource = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8');
+const definitions = appSource.slice(appSource.indexOf('const INDICATORS'), appSource.indexOf('// 历史危机'));
+const scoring = appSource.slice(appSource.indexOf('function scoreOne'), appSource.indexOf('function rc'));
+const compute = new Function(`${definitions}\n${scoring}\nreturn computeAll;`)();
+test('delayed valid inputs retain the same score and weights', () => {
+  const values = {credit_spread: 600, vix: 20, us_10y: 4.5, uk_10y: 5.8, brent: 80, gbp_cny: 9.2, gold: 3500, dxy: 100};
+  const delayed = Object.fromEntries(Object.keys(values).map(k => [k, {stale: true}]));
+  assert.deepEqual(compute(values, {}, delayed), compute(values, {}, null));
+  assert.equal(compute(values, {}, delayed).scores[3], 9.5);
+  assert.ok(compute(values, {}, delayed).overall >= 5.95);
+});

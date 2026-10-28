@@ -8,7 +8,7 @@ v2 的变化：
 - 综合评分加入核心信号地板，利差进入高风险区时总分不会再被其他平静指标稀释
 - 估值层改用纳斯达克 52 周回撤量化，三层叠加场景可以真正触发
 - 浏览器里不再放任何 API Key，前端只读静态 JSON
-- 数据新鲜度硬规则：任何指标超过 3 个交易日未更新即剔除评分并变灰，页面顶部显示最旧一项是哪个
+- 更新延迟与风险评分分开：最近有效值持续参与评分，延迟显示真实日期，不删除指标或改变权重。
 
 先看 `CODEX_TASKS.md`。
 
@@ -30,9 +30,9 @@ src/App.jsx                  前端
 1. 在 GitHub 新建一个仓库（可以是私有仓库），把本项目推上去，默认分支为 `main`。
 2. 仓库 Settings → Pages → Build and deployment → Source 选 **GitHub Actions**。
 3. 仓库 Settings → Actions → General → Workflow permissions 选 **Read and write permissions**。
-4. （可选）Settings → Secrets and variables → Actions → New repository secret，名称 `ANTHROPIC_API_KEY`。不填也能跑，只是抓取失败的字段不会用 Claude 补齐。
+4. 无需 AI API 密钥；仅使用数据源实际公布的值。
 5. Actions 页面 → `daily-update` → **Run workflow** 手动跑一次，确认绿色通过。
-6. 之后每天 UTC 07:17、13:17、19:17、23:17 自动执行。访问地址在 Actions 日志的 deploy 步骤里，或 Settings → Pages 顶部。
+6. 之后每小时第 17 分钟（UTC） 自动执行。访问地址在 Actions 日志的 deploy 步骤里，或 Settings → Pages 顶部。
 
 注意：GitHub 的定时任务在仓库 60 天无 commit 时会自动暂停，但本任务每天自己 commit 数据，所以不会触发这个规则。
 
@@ -81,7 +81,7 @@ Codex 需要重点验证的三处（本地 sandbox 无法访问外网，未实�
 | 黄金 | ×0.8 | <2800 | 2800-3500 | 3500-4200 | >$4200 | Yahoo |
 | DXY | ×0.8 | <101 | 101-106 | 106-112 | >112 | Yahoo |
 
-综合评分 = max(加权均值, 信用利差单项分 × 0.85)。数据日期超过 3 个交易日的指标不参与加权（`latest.meta[key].stale`）。
+综合评分 = max(加权均值, 信用利差单项分 × 0.85)。`latest.meta[key].stale` 只标记更新延迟，不再剔除有效值或改变权重；含延迟数据时页面明确提示。
 
 ## 注意事项
 
@@ -91,10 +91,12 @@ Codex 需要重点验证的三处（本地 sandbox 无法访问外网，未实�
 - 数据源可能改版，脚本每行都打印来源，出问题时看日志即可定位
 
 
-### 2026-10-27 每日时效修正
+### 2026-10-28 数据更新修复（取代此前的过期剔除规则）
 
-- GitHub Actions 每天 UTC 07:17、13:17、19:17、23:17 抓取并发布（含周末，实际启动可能受队列延迟影响）。
+- GitHub Actions 每小时第 17 分钟（UTC） 抓取并发布（含周末，实际启动可能受队列延迟影响）。
 - HY OAS 同时检查官方 CSV、官方 dashboard 和同序列镜像，采用最新有效日期；保留历史并避免缓存日期倒退。
 - 英国 10Y 使用 BoE IUDMNPY 日度序列，按日期选择最新有效记录；失败保留原日期缓存，不用月度值或 AI 估值替代。
-- HY OAS 和英国 10Y 超过 1 个交易日即标记过期、剔除评分并在 Actions 发出警告。其他指标保留 3 个交易日门槛。
+- HY OAS / 英国 10Y 超过 2 个交易日标记延迟，其他指标超过 3 个交易日标记延迟；均保留最近有效值参与评分。BoE 官方说明日度序列通常延迟 1–2 个工作日发布：https://www.bankofengland.co.uk/boeapps/database/help.asp
+- 网络请求对瞬时错误重试两次；所有指标均保留有效缓存并禁止观察日期倒退。记录每轮 checked_at 和 fetch_status，区分核验成功与连接失败。
+- 自动取数使用 macOS 运行器，验证其对 FRED 的连通性，避免原 Ubuntu 出口持续超时。
 - 每日抓取不等于来源每日已发布；尚未公布的数据不会伪造为当天值。页面每 10 分钟同步刷新数值、历史和图表。

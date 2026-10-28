@@ -478,20 +478,12 @@ def fetch_all():
     # ── Bank of England daily series; never substitute a monthly yield ──
     log("Bank of England …")
     try:
-        previous = json.loads((OUT_DIR / "latest.json").read_text())
-        old = previous["meta"]["uk_10y"]
-        if old["source"] == "BoE IUDMNPY":
-            put("uk_10y", previous["values"]["uk_10y"], old["source"], old["as_of"], cached=True)
-    except (OSError, ValueError, KeyError, TypeError):
-        pass
-    try:
         d, v = boe_uk_10y()
         put("uk_10y", v, "BoE IUDMNPY", d)
     except Exception as e:
         log(f"  BoE 日度抓取失败，保留原日期缓存: {e}")
 
     # ── Required inputs: never manufacture missing observations ──
-    required = ["credit_spread", "vix", "us_10y", "uk_10y", "brent", "gbp_cny", "gold", "dxy", "nasdaq"]
     # GitHub hosted runner 可能无法连通 St. Louis Fed；只对核心 OAS 使用上次官方抓取缓存。
     if "credit_spread" not in fields:
         cached, cached_series = cached_oas()
@@ -501,6 +493,15 @@ def fetch_all():
             log(f"  ✓ credit_spread {cached['value']:>10.4f}  (FRED 上次成功抓取, {cached['as_of']})")
 
     derived = compute_derived(fields, oas_series, yseries.get("hyg"), yseries.get("iei"), yseries.get("nasdaq"))
+    # A failed quote download must not erase a previously verified derived signal.
+    groups = [(["hyg", "iei"], ["hy_proxy_20d_pct", "hy_proxy_ratio"]),
+              (["nasdaq"], ["nasdaq_drawdown_pct", "nasdaq_20d_pct", "nasdaq_52w_high"])]
+    for inputs, outputs in groups:
+        same_dates = all(fields.get(k, {}).get("as_of") == previous.get("meta", {}).get(k, {}).get("as_of") for k in inputs)
+        if same_dates:
+            for key in outputs:
+                if key not in derived and key in previous.get("derived", {}):
+                    derived[key] = previous["derived"][key]
     for key, field in fields.items():
         field["fetch_status"] = "checked" if key in checked else "fetch_failed_cached"
     return fields, derived, oas_series

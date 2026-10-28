@@ -71,3 +71,24 @@ jobs:
           path: dist
       - id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Check update health after publishing
+        if: success()
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          data = json.loads(Path('public/data/latest.json').read_text())
+          delayed = data['freshness'].get('delayed_indicators', [])
+          lines = ['## Data update health', '', '| Indicator | Observation date | Fetch status |', '| --- | --- | --- |']
+          for key, info in data['meta'].items():
+              lines.append(f"| {key} | {info['as_of']} | {info.get('fetch_status', 'unknown')} |")
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as report:
+              report.write('\n'.join(lines))
+          # Publish retained observations first, then make a genuine delay visible
+          # in Actions. The next hourly run retries automatically.
+          missing = [k for k in ['credit_spread','uk_10y','vix','us_10y','brent','gbp_cny','gold','dxy'] if k not in data['values']]
+          if delayed or missing:
+              raise SystemExit(f'Update needs recovery; delayed={delayed}, missing={missing}. Retained observations are already published.')
+          PY

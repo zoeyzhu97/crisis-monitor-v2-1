@@ -11,7 +11,7 @@ test('dashboard initial render has no missing runtime variables', () => {
     bundle: true, platform: 'node', format: 'cjs', write: false, jsx: 'automatic',
     define: {'import.meta.env.BASE_URL': '"/"'}
   });
-  const html = execFileSync(process.execPath, ['-e', result.outputFiles[0].text], {encoding:'utf8'});
+  const html = execFileSync(process.execPath, ['-'], {input: result.outputFiles[0].text, encoding:'utf8'});
   assert.match(html, /全球金融危机监测仪表盘/);
   assert.match(html, /每小时自动更新/);
 });

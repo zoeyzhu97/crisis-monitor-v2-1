@@ -1,14 +1,14 @@
 {
-  "fetched_at": "2026-10-27T22:58:00.760505+00:00",
-  "date": "2026-10-27",
+  "fetched_at": "2026-10-28T02:16:15.594497+00:00",
+  "date": "2026-10-28",
   "values": {
     "credit_spread": 330.0,
     "vix": 17.52,
     "us_10y": 4.993,
-    "gbp_cny": 8.874,
-    "brent": 109.43,
-    "gold": 4077.0,
-    "dxy": 102.365,
+    "gbp_cny": 8.839,
+    "brent": 111.16,
+    "gold": 4062.0,
+    "dxy": 102.4,
     "nasdaq": 26477.8105,
     "hyg": 77.6,
     "iei": 114.61,
@@ -16,29 +16,29 @@
   },
   "meta": {
     "credit_spread": {
-      "source": "FRED BAMLH0A0HYM2",
+      "source": "Autario mirror / FRED BAMLH0A0HYM2",
       "as_of": "2026-10-26",
-      "stale_bdays": 1,
+      "stale_bdays": 2,
       "max_stale_bdays_allowed": 1,
-      "stale": false
+      "stale": true
     },
     "vix": {
       "source": "Yahoo ^VIX",
       "as_of": "2026-10-27",
-      "stale_bdays": 0,
+      "stale_bdays": 1,
       "max_stale_bdays_allowed": 3,
       "stale": false
     },
     "us_10y": {
       "source": "Yahoo ^TNX",
       "as_of": "2026-10-27",
-      "stale_bdays": 0,
+      "stale_bdays": 1,
       "max_stale_bdays_allowed": 3,
       "stale": false
     },
     "gbp_cny": {
       "source": "Yahoo GBPCNY=X",
-      "as_of": "2026-10-27",
+      "as_of": "2026-10-28",
       "stale_bdays": 0,
       "max_stale_bdays_allowed": 3,
       "stale": false
@@ -46,49 +46,49 @@
     "brent": {
       "source": "Yahoo BZ=F",
       "as_of": "2026-10-27",
-      "stale_bdays": 0,
+      "stale_bdays": 1,
       "max_stale_bdays_allowed": 3,
       "stale": false
     },
     "gold": {
       "source": "Yahoo GC=F",
       "as_of": "2026-10-27",
-      "stale_bdays": 0,
+      "stale_bdays": 1,
       "max_stale_bdays_allowed": 3,
       "stale": false
     },
     "dxy": {
       "source": "Yahoo DX-Y.NYB",
       "as_of": "2026-10-27",
-      "stale_bdays": 0,
+      "stale_bdays": 1,
       "max_stale_bdays_allowed": 3,
       "stale": false
     },
     "nasdaq": {
       "source": "Yahoo ^IXIC",
       "as_of": "2026-10-27",
-      "stale_bdays": 0,
+      "stale_bdays": 1,
       "max_stale_bdays_allowed": 3,
       "stale": false
     },
     "hyg": {
       "source": "Yahoo HYG",
       "as_of": "2026-10-27",
-      "stale_bdays": 0,
+      "stale_bdays": 1,
       "max_stale_bdays_allowed": 3,
       "stale": false
     },
     "iei": {
       "source": "Yahoo IEI",
       "as_of": "2026-10-27",
-      "stale_bdays": 0,
+      "stale_bdays": 1,
       "max_stale_bdays_allowed": 3,
       "stale": false
     },
     "uk_10y": {
       "source": "BoE IUDMNPY",
       "as_of": "2026-10-23",
-      "stale_bdays": 2,
+      "stale_bdays": 3,
       "max_stale_bdays_allowed": 1,
       "stale": true
     }
@@ -106,10 +106,11 @@
     "max_stale_bdays_allowed": 3,
     "daily_max_stale_bdays_allowed": 1,
     "excluded_from_score": [
+      "credit_spread",
       "uk_10y"
     ],
     "oldest_key": "uk_10y",
-    "oldest_bdays": 2,
+    "oldest_bdays": 3,
     "oldest_as_of": "2026-10-23"
   }
 }

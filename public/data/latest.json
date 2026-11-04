@@ -1,17 +1,17 @@
 {
-  "fetched_at": "2026-11-04T17:13:02.175443+00:00",
+  "fetched_at": "2026-11-04T21:55:26.326882+00:00",
   "date": "2026-11-04",
   "values": {
     "credit_spread": 340.0,
-    "vix": 17.11,
-    "us_10y": 4.896,
-    "gbp_cny": 8.9596,
-    "brent": 94.88,
-    "gold": 4070.7,
-    "dxy": 101.605,
-    "nasdaq": 25829.582,
-    "hyg": 77.445,
-    "iei": 115.0475,
+    "vix": 16.61,
+    "us_10y": 4.894,
+    "gbp_cny": 8.9953,
+    "brent": 94.83,
+    "gold": 4069.1001,
+    "dxy": 101.53,
+    "nasdaq": 25736.5137,
+    "hyg": 77.52,
+    "iei": 115.09,
     "uk_10y": 5.1677
   },
   "meta": {
@@ -21,7 +21,7 @@
       "stale_bdays": 1,
       "max_stale_bdays_allowed": 2,
       "stale": false,
-      "checked_at": "2026-11-04T17:13:02.175443+00:00",
+      "checked_at": "2026-11-04T21:55:26.326882+00:00",
       "fetch_status": "checked"
     },
     "vix": {
@@ -30,7 +30,7 @@
       "stale_bdays": 0,
       "max_stale_bdays_allowed": 3,
       "stale": false,
-      "checked_at": "2026-11-04T17:13:02.175443+00:00",
+      "checked_at": "2026-11-04T21:55:26.326882+00:00",
       "fetch_status": "checked"
     },
     "us_10y": {
@@ -39,7 +39,7 @@
       "stale_bdays": 0,
       "max_stale_bdays_allowed": 3,
       "stale": false,
-      "checked_at": "2026-11-04T17:13:02.175443+00:00",
+      "checked_at": "2026-11-04T21:55:26.326882+00:00",
       "fetch_status": "checked"
     },
     "gbp_cny": {
@@ -48,7 +48,7 @@
       "stale_bdays": 0,
       "max_stale_bdays_allowed": 3,
       "stale": false,
-      "checked_at": "2026-11-04T17:13:02.175443+00:00",
+      "checked_at": "2026-11-04T21:55:26.326882+00:00",
       "fetch_status": "checked"
     },
     "brent": {
@@ -57,7 +57,7 @@
       "stale_bdays": 0,
       "max_stale_bdays_allowed": 3,
       "stale": false,
-      "checked_at": "2026-11-04T17:13:02.175443+00:00",
+      "checked_at": "2026-11-04T21:55:26.326882+00:00",
       "fetch_status": "checked"
     },
     "gold": {
@@ -66,7 +66,7 @@
       "stale_bdays": 0,
       "max_stale_bdays_allowed": 3,
       "stale": false,
-      "checked_at": "2026-11-04T17:13:02.175443+00:00",
+      "checked_at": "2026-11-04T21:55:26.326882+00:00",
       "fetch_status": "checked"
     },
     "dxy": {
@@ -75,7 +75,7 @@
       "stale_bdays": 0,
       "max_stale_bdays_allowed": 3,
       "stale": false,
-      "checked_at": "2026-11-04T17:13:02.175443+00:00",
+      "checked_at": "2026-11-04T21:55:26.326882+00:00",
       "fetch_status": "checked"
     },
     "nasdaq": {
@@ -84,7 +84,7 @@
       "stale_bdays": 0,
       "max_stale_bdays_allowed": 3,
       "stale": false,
-      "checked_at": "2026-11-04T17:13:02.175443+00:00",
+      "checked_at": "2026-11-04T21:55:26.326882+00:00",
       "fetch_status": "checked"
     },
     "hyg": {
@@ -93,7 +93,7 @@
       "stale_bdays": 0,
       "max_stale_bdays_allowed": 3,
       "stale": false,
-      "checked_at": "2026-11-04T17:13:02.175443+00:00",
+      "checked_at": "2026-11-04T21:55:26.326882+00:00",
       "fetch_status": "checked"
     },
     "iei": {
@@ -102,7 +102,7 @@
       "stale_bdays": 0,
       "max_stale_bdays_allowed": 3,
       "stale": false,
-      "checked_at": "2026-11-04T17:13:02.175443+00:00",
+      "checked_at": "2026-11-04T21:55:26.326882+00:00",
       "fetch_status": "checked"
     },
     "uk_10y": {
@@ -111,17 +111,17 @@
       "stale_bdays": 2,
       "max_stale_bdays_allowed": 2,
       "stale": false,
-      "checked_at": "2026-11-04T17:13:02.175443+00:00",
+      "checked_at": "2026-11-04T21:55:26.326882+00:00",
       "fetch_status": "checked"
     }
   },
   "derived": {
     "credit_spread_20d_change": 37.0,
     "credit_spread_20d_min": 303.0,
-    "hy_proxy_20d_pct": -1.11,
-    "hy_proxy_ratio": 0.6732,
-    "nasdaq_drawdown_pct": -6.41,
-    "nasdaq_20d_pct": -6.21,
+    "hy_proxy_20d_pct": -1.05,
+    "hy_proxy_ratio": 0.6736,
+    "nasdaq_drawdown_pct": -6.75,
+    "nasdaq_20d_pct": -6.54,
     "nasdaq_52w_high": 27599.79
   },
   "freshness": {

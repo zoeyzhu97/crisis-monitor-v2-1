@@ -1,27 +1,27 @@
 {
-  "fetched_at": "2026-11-13T16:25:43.469097+00:00",
+  "fetched_at": "2026-11-13T17:05:01.730908+00:00",
   "date": "2026-11-13",
   "values": {
-    "credit_spread": 330.0,
-    "vix": 20.18,
+    "credit_spread": 320.0,
+    "vix": 20.33,
     "us_10y": 5.133,
-    "gbp_cny": 8.7973,
-    "brent": 96.46,
+    "gbp_cny": 8.7866,
+    "brent": 95.83,
     "gold": 3881.6001,
-    "dxy": 103.35,
-    "nasdaq": 24941.082,
-    "hyg": 76.985,
-    "iei": 113.935,
+    "dxy": 103.384,
+    "nasdaq": 24980.2598,
+    "hyg": 76.955,
+    "iei": 113.925,
     "uk_10y": 5.2044
   },
   "meta": {
     "credit_spread": {
-      "source": "Autario mirror / FRED BAMLH0A0HYM2",
-      "as_of": "2026-11-11",
-      "stale_bdays": 2,
+      "source": "FRED BAMLH0A0HYM2",
+      "as_of": "2026-11-12",
+      "stale_bdays": 1,
       "max_stale_bdays_allowed": 2,
       "stale": false,
-      "checked_at": "2026-11-13T16:25:43.469097+00:00",
+      "checked_at": "2026-11-13T17:05:01.730908+00:00",
       "fetch_status": "checked"
     },
     "vix": {
@@ -30,7 +30,7 @@
       "stale_bdays": 0,
       "max_stale_bdays_allowed": 3,
       "stale": false,
-      "checked_at": "2026-11-13T16:25:43.469097+00:00",
+      "checked_at": "2026-11-13T17:05:01.730908+00:00",
       "fetch_status": "checked"
     },
     "us_10y": {
@@ -39,7 +39,7 @@
       "stale_bdays": 0,
       "max_stale_bdays_allowed": 3,
       "stale": false,
-      "checked_at": "2026-11-13T16:25:43.469097+00:00",
+      "checked_at": "2026-11-13T17:05:01.730908+00:00",
       "fetch_status": "checked"
     },
     "gbp_cny": {
@@ -48,7 +48,7 @@
       "stale_bdays": 0,
       "max_stale_bdays_allowed": 3,
       "stale": false,
-      "checked_at": "2026-11-13T16:25:43.469097+00:00",
+      "checked_at": "2026-11-13T17:05:01.730908+00:00",
       "fetch_status": "checked"
     },
     "brent": {
@@ -57,7 +57,7 @@
       "stale_bdays": 0,
       "max_stale_bdays_allowed": 3,
       "stale": false,
-      "checked_at": "2026-11-13T16:25:43.469097+00:00",
+      "checked_at": "2026-11-13T17:05:01.730908+00:00",
       "fetch_status": "checked"
     },
     "gold": {
@@ -66,7 +66,7 @@
       "stale_bdays": 0,
       "max_stale_bdays_allowed": 3,
       "stale": false,
-      "checked_at": "2026-11-13T16:25:43.469097+00:00",
+      "checked_at": "2026-11-13T17:05:01.730908+00:00",
       "fetch_status": "checked"
     },
     "dxy": {
@@ -75,7 +75,7 @@
       "stale_bdays": 0,
       "max_stale_bdays_allowed": 3,
       "stale": false,
-      "checked_at": "2026-11-13T16:25:43.469097+00:00",
+      "checked_at": "2026-11-13T17:05:01.730908+00:00",
       "fetch_status": "checked"
     },
     "nasdaq": {
@@ -84,7 +84,7 @@
       "stale_bdays": 0,
       "max_stale_bdays_allowed": 3,
       "stale": false,
-      "checked_at": "2026-11-13T16:25:43.469097+00:00",
+      "checked_at": "2026-11-13T17:05:01.730908+00:00",
       "fetch_status": "checked"
     },
     "hyg": {
@@ -93,7 +93,7 @@
       "stale_bdays": 0,
       "max_stale_bdays_allowed": 3,
       "stale": false,
-      "checked_at": "2026-11-13T16:25:43.469097+00:00",
+      "checked_at": "2026-11-13T17:05:01.730908+00:00",
       "fetch_status": "checked"
     },
     "iei": {
@@ -102,7 +102,7 @@
       "stale_bdays": 0,
       "max_stale_bdays_allowed": 3,
       "stale": false,
-      "checked_at": "2026-11-13T16:25:43.469097+00:00",
+      "checked_at": "2026-11-13T17:05:01.730908+00:00",
       "fetch_status": "checked"
     },
     "uk_10y": {
@@ -111,17 +111,17 @@
       "stale_bdays": 2,
       "max_stale_bdays_allowed": 2,
       "stale": false,
-      "checked_at": "2026-11-13T16:25:43.469097+00:00",
+      "checked_at": "2026-11-13T17:05:01.730908+00:00",
       "fetch_status": "checked"
     }
   },
   "derived": {
-    "credit_spread_20d_change": 14.0,
+    "credit_spread_20d_change": -5.0,
     "credit_spread_20d_min": 314.0,
-    "hy_proxy_20d_pct": 0.43,
-    "hy_proxy_ratio": 0.6757,
-    "nasdaq_drawdown_pct": -9.63,
-    "nasdaq_20d_pct": -4.59,
+    "hy_proxy_20d_pct": 0.4,
+    "hy_proxy_ratio": 0.6755,
+    "nasdaq_drawdown_pct": -9.49,
+    "nasdaq_20d_pct": -4.44,
     "nasdaq_52w_high": 27599.79
   },
   "freshness": {
@@ -129,7 +129,7 @@
     "daily_max_stale_bdays_allowed": 2,
     "excluded_from_score": [],
     "delayed_indicators": [],
-    "oldest_key": "credit_spread",
+    "oldest_key": "uk_10y",
     "oldest_bdays": 2,
     "oldest_as_of": "2026-11-11"
   }

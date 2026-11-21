@@ -1,27 +1,27 @@
 {
-  "fetched_at": "2026-11-21T02:15:57.713959+00:00",
+  "fetched_at": "2026-11-21T09:54:37.775492+00:00",
   "date": "2026-11-21",
   "values": {
     "credit_spread": 352.0,
     "vix": 35.89,
     "us_10y": 4.912,
-    "gbp_cny": 8.7238,
-    "brent": 89.87,
-    "gold": 3539.0,
-    "dxy": 103.84,
-    "nasdaq": 22617.7324,
-    "hyg": 76.395,
-    "iei": 115.25,
+    "gbp_cny": 8.709,
+    "brent": 92.57,
+    "gold": 3515.3999,
+    "dxy": 103.81,
+    "nasdaq": 22617.7305,
+    "hyg": 76.33,
+    "iei": 115.19,
     "uk_10y": 5.268
   },
   "meta": {
     "credit_spread": {
-      "source": "FRED BAMLH0A0HYM2",
+      "source": "Autario mirror / FRED BAMLH0A0HYM2",
       "as_of": "2026-11-19",
       "stale_bdays": 1,
       "max_stale_bdays_allowed": 2,
       "stale": false,
-      "checked_at": "2026-11-21T02:15:57.713959+00:00",
+      "checked_at": "2026-11-21T09:54:37.775492+00:00",
       "fetch_status": "checked"
     },
     "vix": {
@@ -30,7 +30,7 @@
       "stale_bdays": 0,
       "max_stale_bdays_allowed": 3,
       "stale": false,
-      "checked_at": "2026-11-21T02:15:57.713959+00:00",
+      "checked_at": "2026-11-21T09:54:37.775492+00:00",
       "fetch_status": "checked"
     },
     "us_10y": {
@@ -39,16 +39,16 @@
       "stale_bdays": 0,
       "max_stale_bdays_allowed": 3,
       "stale": false,
-      "checked_at": "2026-11-21T02:15:57.713959+00:00",
+      "checked_at": "2026-11-21T09:54:37.775492+00:00",
       "fetch_status": "checked"
     },
     "gbp_cny": {
       "source": "Yahoo GBPCNY=X",
-      "as_of": "2026-11-20",
+      "as_of": "2026-11-21",
       "stale_bdays": 0,
       "max_stale_bdays_allowed": 3,
       "stale": false,
-      "checked_at": "2026-11-21T02:15:57.713959+00:00",
+      "checked_at": "2026-11-21T09:54:37.775492+00:00",
       "fetch_status": "checked"
     },
     "brent": {
@@ -57,7 +57,7 @@
       "stale_bdays": 0,
       "max_stale_bdays_allowed": 3,
       "stale": false,
-      "checked_at": "2026-11-21T02:15:57.713959+00:00",
+      "checked_at": "2026-11-21T09:54:37.775492+00:00",
       "fetch_status": "checked"
     },
     "gold": {
@@ -66,7 +66,7 @@
       "stale_bdays": 0,
       "max_stale_bdays_allowed": 3,
       "stale": false,
-      "checked_at": "2026-11-21T02:15:57.713959+00:00",
+      "checked_at": "2026-11-21T09:54:37.775492+00:00",
       "fetch_status": "checked"
     },
     "dxy": {
@@ -75,7 +75,7 @@
       "stale_bdays": 0,
       "max_stale_bdays_allowed": 3,
       "stale": false,
-      "checked_at": "2026-11-21T02:15:57.713959+00:00",
+      "checked_at": "2026-11-21T09:54:37.775492+00:00",
       "fetch_status": "checked"
     },
     "nasdaq": {
@@ -84,7 +84,7 @@
       "stale_bdays": 0,
       "max_stale_bdays_allowed": 3,
       "stale": false,
-      "checked_at": "2026-11-21T02:15:57.713959+00:00",
+      "checked_at": "2026-11-21T09:54:37.775492+00:00",
       "fetch_status": "checked"
     },
     "hyg": {
@@ -93,7 +93,7 @@
       "stale_bdays": 0,
       "max_stale_bdays_allowed": 3,
       "stale": false,
-      "checked_at": "2026-11-21T02:15:57.713959+00:00",
+      "checked_at": "2026-11-21T09:54:37.775492+00:00",
       "fetch_status": "checked"
     },
     "iei": {
@@ -102,7 +102,7 @@
       "stale_bdays": 0,
       "max_stale_bdays_allowed": 3,
       "stale": false,
-      "checked_at": "2026-11-21T02:15:57.713959+00:00",
+      "checked_at": "2026-11-21T09:54:37.775492+00:00",
       "fetch_status": "checked"
     },
     "uk_10y": {
@@ -111,15 +111,15 @@
       "stale_bdays": 2,
       "max_stale_bdays_allowed": 2,
       "stale": false,
-      "checked_at": "2026-11-21T02:15:57.713959+00:00",
+      "checked_at": "2026-11-21T09:54:37.775492+00:00",
       "fetch_status": "checked"
     }
   },
   "derived": {
     "credit_spread_20d_change": 12.0,
     "credit_spread_20d_min": 314.0,
-    "hy_proxy_20d_pct": -0.48,
-    "hy_proxy_ratio": 0.6684,
+    "hy_proxy_20d_pct": -1.38,
+    "hy_proxy_ratio": 0.6626,
     "nasdaq_drawdown_pct": -18.05,
     "nasdaq_20d_pct": -12.86,
     "nasdaq_52w_high": 27599.79
